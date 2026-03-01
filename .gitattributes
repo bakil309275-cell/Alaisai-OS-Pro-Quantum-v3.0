@@ -1,4 +1,3 @@
-# تعيين كل ملفات الصور كـ binary صراحة
 *.png binary
 *.ico binary
 *.jpg binary
@@ -6,5 +5,4 @@
 *.gif binary
 *.webp binary
 
-# التأكد من أن Git لا يحاول تغيير نهايات الأسطر
 * -text
