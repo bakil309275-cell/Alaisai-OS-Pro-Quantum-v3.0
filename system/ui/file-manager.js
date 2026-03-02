@@ -1,12 +1,12 @@
-// ==================== file-manager.js (الإصدار 7.2.0 - فتح المجلد بنقرة واحدة) ====================
+// ==================== file-manager.js (الإصدار 7.4.0 - مع الحفاظ على جميع الأزرار) ====================
 /**
  * Alaisai File Manager - مدير الملفات المتطور مع دعم كامل لجميع المصادر
- * @version 7.2.0
+ * @version 7.4.0
  */
 
 const AlaisaiFileManager = {
-    version: '7.2.0',
-    repo: 'alsamayoanwww-cyber/Alaisai_OS_Pro',
+    version: '7.4.0',
+    repo: 'bakil309275-cell/Alaisai_OS_Pro',
     branch: 'main',
     token: null,
     webdavCredentials: { url: '', user: '', pass: '' },
@@ -19,7 +19,6 @@ const AlaisaiFileManager = {
     dragSource: null,
     autoSaveTimer: null,
     currentEditingFile: null,
-    clickTimer: null,
 
     // ========== المصادقة ==========
     setToken(token) {
@@ -40,6 +39,23 @@ const AlaisaiFileManager = {
     getWebDAVPassword() {
         const encoded = sessionStorage.getItem('webdav_pass_enc');
         return encoded ? atob(encoded) : '';
+    },
+
+    // ========== دوال العودة إلى لوحة التحكم ==========
+    goBackToAdminDashboard() {
+        // العودة إلى لوحة التحكم المركزية دون إغلاق التطبيق بالكامل
+        if (window.Admin && typeof Admin.renderTab === 'function') {
+            // إذا كنا داخل تطبيق، نغلق المرحلة الحالية ونفتح لوحة التحكم
+            if (window.AlaisaiOS && typeof AlaisaiOS.closeStage === 'function') {
+                AlaisaiOS.closeStage();
+            }
+            // فتح لوحة التحكم مباشرة
+            Admin.openDashboard();
+        } else {
+            // حل بديل: العودة إلى الصفحة الرئيسية
+            window.location.hash = '';
+            location.reload();
+        }
     },
 
     // ========== OPFS Local Storage ==========
@@ -427,16 +443,13 @@ const AlaisaiFileManager = {
 
     // ========== دوال الإختيار المتعدد والسحب ==========
     handleItemClick(path, event, isDirectory) {
-        // منع التحديد إذا كان السحب
         if (this.isDragging) return;
         
         if (isDirectory) {
-            // للمجلدات: فتح مباشرة مع منع التحديد
             this.navigateTo(path);
             return;
         }
         
-        // للملفات: سلوك التحديد
         if (event.ctrlKey || event.metaKey) {
             if (this.selectedItems.has(path)) {
                 this.selectedItems.delete(path);
@@ -466,7 +479,6 @@ const AlaisaiFileManager = {
             const path = el.dataset.path;
             const type = el.dataset.type;
             if (type === 'dir') {
-                // المجلدات لا يتم تظليلها أبداً
                 el.classList.remove('selected');
                 el.style.background = '';
                 el.style.border = '';
@@ -924,6 +936,7 @@ const AlaisaiFileManager = {
 
         const breadcrumb = `
             <div style="display:flex; gap:5px; margin-bottom:15px; flex-wrap:wrap; align-items:center; background:rgba(255,255,255,0.05); padding:10px; border-radius:8px;">
+                <button class="adm-btn" onclick="AlaisaiFileManager.goBackToAdminDashboard()" style="background:#f72585; color:white;">🔙 رجوع للوحة التحكم</button>
                 <button class="adm-btn" onclick="AlaisaiFileManager.navigateTo('')">🏠 الرئيسية</button>
                 ${pathParts.map((p, i) => {
                     const fullPath = pathParts.slice(0, i+1).join('/');
@@ -1069,7 +1082,8 @@ const AlaisaiFileManager = {
             const content = `
                 <div class="admin-ui" style="direction:ltr; text-align:left;">
                     <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px;">
-                        <button onclick="AlaisaiFileManager.openUI('${this.currentPath}', '${this.currentSource}')" class="adm-btn" style="background:#4cc9f0;">⬅ رجوع</button>
+                        <button onclick="AlaisaiFileManager.goBackToAdminDashboard()" class="adm-btn" style="background:#f72585;">🔙 رجوع للوحة التحكم</button>
+                        <button onclick="AlaisaiFileManager.openUI('${this.currentPath}', '${this.currentSource}')" class="adm-btn" style="background:#4cc9f0;">⬅ رجوع للمستكشف</button>
                         <h3 style="color:#4cc9f0;">✏️ تعديل: ${path}</h3>
                     </div>
                     
@@ -1193,4 +1207,4 @@ const AlaisaiFileManager = {
 
 // جعله متاحاً عمومياً
 window.AlaisaiFileManager = AlaisaiFileManager;
-console.log('📁 Alaisai File Manager v7.2.0 جاهز للعمل - المجلدات تفتح بنقرة واحدة والملفات تختار');
+console.log('📁 Alaisai File Manager v7.4.0 جاهز للعمل - مع جميع أزرار التنقل');
