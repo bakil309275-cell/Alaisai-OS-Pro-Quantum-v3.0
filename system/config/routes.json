@@ -1,53 +1,94 @@
 {
-  "version": "2.0.0",
+  "version": "3.0.0",
   "basePath": "/",
   "routes": [
     {
       "path": "/",
-      "component": "home",
+      "component": "dashboard",
       "title": "الرئيسية",
+      "icon": "🏠",
       "auth": false,
       "layout": "default"
     },
     {
-      "path": "/apps",
-      "component": "app-manager",
-      "title": "التطبيقات",
+      "path": "/files",
+      "component": "file-manager",
+      "title": "مدير الملفات",
+      "icon": "📁",
       "auth": true,
-      "permissions": ["view:apps"],
+      "permissions": ["files:read"],
+      "layout": "default"
+    },
+    {
+      "path": "/addons",
+      "component": "addons-manager",
+      "title": "الإضافات",
+      "icon": "📦",
+      "auth": true,
+      "permissions": ["addons:manage"],
       "layout": "default"
     },
     {
       "path": "/settings",
-      "component": "settings-panel",
+      "component": "settings",
       "title": "الإعدادات",
+      "icon": "⚙️",
       "auth": true,
-      "permissions": ["manage:settings"],
+      "permissions": ["settings:manage"],
       "layout": "admin"
     },
     {
       "path": "/admin",
-      "component": "admin-dashboard",
-      "title": "لوحة الإدارة",
+      "component": "admin",
+      "title": "لوحة التحكم",
+      "icon": "🛠️",
       "auth": true,
-      "permissions": ["access:admin"],
+      "permissions": ["admin:access"],
       "layout": "admin"
     },
     {
       "path": "/profile/:id",
-      "component": "user-profile",
+      "component": "profile",
       "title": "الملف الشخصي",
+      "icon": "👤",
       "auth": true,
       "dynamic": true,
       "layout": "default"
     },
     {
-      "path": "/addons/:name",
-      "component": "addon-viewer",
-      "title": "الإضافة",
+      "path": "/apps/:id",
+      "component": "app-viewer",
+      "title": "التطبيق",
       "auth": true,
       "dynamic": true,
-      "layout": "addon"
+      "layout": "app"
+    },
+    {
+      "path": "/quantum",
+      "component": "quantum-lab",
+      "title": "المعمل الكمومي",
+      "icon": "⚛️",
+      "auth": true,
+      "permissions": ["quantum:access"],
+      "layout": "fullscreen"
+    },
+    {
+      "path": "/ai",
+      "component": "ai-lab",
+      "title": "معمل الذكاء الاصطناعي",
+      "icon": "🧠",
+      "auth": true,
+      "permissions": ["ai:access"],
+      "layout": "fullscreen"
+    },
+    {
+      "path": "/hardware",
+      "component": "hardware",
+      "title": "الأجهزة",
+      "icon": "🔌",
+      "auth": true,
+      "permissions": ["hardware:access"],
+      "layout": "default"
     }
   ],
   "middleware": [
@@ -57,22 +98,39 @@
       "priority": 1
     },
     {
-      "name": "logger",
+      "name": "permissions",
       "enabled": true,
       "priority": 2
     },
     {
-      "name": "rateLimiter",
+      "name": "logger",
       "enabled": true,
       "priority": 3
+    },
+    {
+      "name": "rateLimiter",
+      "enabled": true,
+      "priority": 4
+    },
+    {
+      "name": "cache",
+      "enabled": true,
+      "priority": 5
     }
   ],
   "notFound": {
     "component": "not-found",
-    "title": "الصفحة غير موجودة"
+    "title": "الصفحة غير موجودة",
+    "layout": "error"
   },
   "error": {
     "component": "error",
-    "title": "خطأ في النظام"
+    "title": "خطأ في النظام",
+    "layout": "error"
+  },
+  "forbidden": {
+    "component": "forbidden",
+    "title": "غير مصرح",
+    "layout": "error"
   }
 }

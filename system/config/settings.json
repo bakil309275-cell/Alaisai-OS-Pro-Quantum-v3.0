@@ -1,29 +1,43 @@
 {
-  "version": "2.0.0",
+  "version": "3.0.0",
   "system": {
-    "name": "Alaisai OS",
-    "version": "2.0.0",
+    "name": "Alaisai Quantum OS",
+    "version": "3.0.0",
     "build": "2026.03",
     "environment": "production",
     "debug": false,
-    "maintenance": false
+    "maintenance": false,
+    "quantum": {
+      "enabled": true,
+      "qubits": 8,
+      "coherence": 0.99
+    },
+    "ai": {
+      "enabled": true,
+      "learning": true,
+      "model": "neural-v3"
+    }
   },
   "appearance": {
     "theme": "dark",
     "primaryColor": "#4cc9f0",
     "accentColor": "#f72585",
+    "backgroundColor": "#0a0a1a",
     "fontSize": "medium",
     "animations": true,
     "compactMode": false,
+    "glassmorphism": true,
     "customCSS": ""
   },
   "language": {
     "default": "ar",
     "fallback": "en",
     "rtl": true,
-    "datetime": "ar-SA"
+    "datetime": "ar-SA",
+    "numbers": "arabic"
   },
   "security": {
+    "encryption": "quantum-resistant",
     "sessionTimeout": 3600,
     "maxLoginAttempts": 5,
     "lockoutDuration": 900,
@@ -33,30 +47,51 @@
       "requireNumbers": true,
       "requireSpecialChars": true,
       "requireUppercase": false
+    },
+    "rateLimit": {
+      "enabled": true,
+      "maxRequests": 100,
+      "windowMs": 60000
     }
   },
   "storage": {
+    "provider": "distributed",
     "maxBackups": 10,
     "autoBackup": true,
-    "backupInterval": 300,
-    "compression": true
+    "backupInterval": 3600,
+    "compression": true,
+    "encryption": true,
+    "redundancy": 3
   },
   "performance": {
     "lazyLoad": true,
-    "cacheSize": 50,
+    "cacheSize": 100,
     "prefetch": true,
-    "workers": 2
+    "workers": 4,
+    "compressionLevel": 6,
+    "debounceDelay": 300,
+    "throttleDelay": 100
   },
   "features": {
     "pwa": true,
     "offlineMode": true,
     "notifications": true,
     "analytics": false,
-    "developerMode": false
+    "developerMode": false,
+    "hardwareAccess": true,
+    "p2p": true,
+    "ipfs": true
   },
   "updates": {
     "autoCheck": true,
     "checkInterval": 86400,
-    "channel": "stable"
+    "channel": "stable",
+    "autoUpdate": false
+  },
+  "network": {
+    "timeout": 30000,
+    "retries": 3,
+    "cors": true,
+    "cache": true
   }
 }

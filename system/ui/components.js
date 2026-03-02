@@ -1,374 +1,565 @@
 /**
- * Alaisai Components - مكتبة المكونات القابلة لإعادة الاستخدام
- * @version 2.0.0
+ * Alaisai Quantum Components - مكتبة المكونات المتكاملة
+ * @version 3.0.0
  */
 
-const AlaisaiComponents = {
-    version: '2.0.0',
+const AlaisaiQuantumComponents = {
+    version: '3.0.0',
     registry: new Map(),
     
-    // تسجيل مكون
     register(name, component) {
-        this.registry.set(name, {
-            render: component.render,
-            styles: component.styles || '',
-            props: component.props || {},
-            lifecycle: component.lifecycle || {},
-            name
-        });
-        console.log(`🧩 تم تسجيل مكون: ${name}`);
-        return this;
+        this.registry.set(name, component);
+        console.log(`🧩 Component registered: ${name}`);
     },
     
-    // إنشاء مكون
-    render(name, props = {}, children = '') {
+    render(name, props = {}) {
         const component = this.registry.get(name);
         if (!component) {
-            console.error(`❌ المكون ${name} غير موجود`);
+            console.error(`Component ${name} not found`);
             return '';
         }
         
-        const validatedProps = this._validateProps(component.props, props);
-        
-        if (component.lifecycle.beforeRender) {
-            component.lifecycle.beforeRender(validatedProps);
-        }
-        
-        let html = component.render(validatedProps, children);
-        
-        // دمج الأنماط (مرة واحدة لكل مكون)
-        const styleId = `style-${name}`;
-        if (component.styles && !document.getElementById(styleId)) {
-            const style = document.createElement('style');
-            style.id = styleId;
-            style.textContent = component.styles;
-            document.head.appendChild(style);
-        }
-        
-        return html;
+        return component.render(props);
     },
     
-    _validateProps(definition, props) {
-        const validated = { ...props };
-        for (const [key, config] of Object.entries(definition)) {
-            if (config.required && props[key] === undefined) {
-                console.warn(`⚠️ Prop ${key} مطلوب`);
-                validated[key] = config.default;
-            } else if (props[key] === undefined && config.default !== undefined) {
-                validated[key] = config.default;
+    createElement(tag, props = {}, children = []) {
+        const element = document.createElement(tag);
+        
+        // إضافة الخصائص
+        Object.entries(props).forEach(([key, value]) => {
+            if (key === 'style' && typeof value === 'object') {
+                Object.assign(element.style, value);
+            } else if (key.startsWith('on') && typeof value === 'function') {
+                element.addEventListener(key.slice(2).toLowerCase(), value);
+            } else {
+                element.setAttribute(key, value);
             }
-            
-            // التحقق من النوع (بسيط)
-            if (props[key] !== undefined && config.type) {
-                const type = typeof props[key];
-                if (type !== config.type && !(config.type === 'array' && Array.isArray(props[key]))) {
-                    console.warn(`⚠️ Prop ${key} يجب أن يكون ${config.type}`);
-                }
+        });
+        
+        // إضافة الأطفال
+        children.forEach(child => {
+            if (typeof child === 'string') {
+                element.appendChild(document.createTextNode(child));
+            } else if (child instanceof HTMLElement) {
+                element.appendChild(child);
             }
-        }
-        return validated;
-    },
-    
-    // دالة مساعدة للترجمة (اختصار)
-    _t(key, params) {
-        return window.AlaisaiI18n ? AlaisaiI18n.t(key, params) : key;
+        });
+        
+        return element;
     }
 };
 
-// ========== المكونات ==========
+// ===== المكونات =====
 
-// زر
-AlaisaiComponents.register('Button', {
-    render: (props, children) => {
+// زر كمومي
+AlaisaiQuantumComponents.register('QuantumButton', {
+    render: (props = {}) => {
         const {
+            text = 'زر',
+            icon = '',
             variant = 'primary',
             size = 'medium',
             disabled = false,
-            onClick = '',
             fullWidth = false,
-            icon = '',
-            type = 'button'
+            onClick = ''
         } = props;
         
-        const classes = [
-            'btn',
-            `btn-${variant}`,
-            `btn-${size}`,
-            fullWidth ? 'btn-full' : '',
-            disabled ? 'btn-disabled' : ''
-        ].filter(Boolean).join(' ');
+        const variants = {
+            primary: '#4cc9f0',
+            success: '#4ade80',
+            danger: '#f72585',
+            warning: '#fbbf24',
+            outline: 'transparent'
+        };
         
-        const iconHtml = icon ? `<span class="btn-icon">${icon}</span>` : '';
-        const text = children || AlaisaiComponents._t('__button');
+        const sizes = {
+            small: '8px 16px',
+            medium: '12px 24px',
+            large: '16px 32px'
+        };
         
-        return `
-            <button 
-                type="${type}"
-                class="${classes}"
-                onclick="${onClick}"
-                ${disabled ? 'disabled' : ''}
-            >
-                ${iconHtml}
-                <span class="btn-text">${text}</span>
-            </button>
-        `;
-    },
-    styles: `
-        .btn {
+        const style = `
+            padding: ${sizes[size]};
+            background: ${variants[variant]};
+            border: ${variant === 'outline' ? '2px solid #4cc9f0' : 'none'};
+            color: ${variant === 'outline' ? '#4cc9f0' : 'white'};
+            border-radius: 8px;
+            cursor: ${disabled ? 'not-allowed' : 'pointer'};
+            opacity: ${disabled ? 0.5 : 1};
+            width: ${fullWidth ? '100%' : 'auto'};
+            font-size: ${size === 'small' ? '12px' : size === 'medium' ? '14px' : '16px'};
+            font-weight: 500;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-        .btn-primary { background: var(--primary, #4cc9f0); color: white; }
-        .btn-primary:hover { background: var(--primary-dark, #3aa8d0); }
-        .btn-success { background: var(--success, #4ade80); color: white; }
-        .btn-danger { background: var(--danger, #f72585); color: white; }
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--primary, #4cc9f0);
-            color: var(--primary, #4cc9f0);
-        }
-        .btn-outline:hover {
-            background: var(--primary, #4cc9f0);
-            color: white;
-        }
-        .btn-small { padding: 6px 12px; font-size: 12px; }
-        .btn-medium { padding: 10px 20px; font-size: 14px; }
-        .btn-large { padding: 14px 28px; font-size: 16px; }
-        .btn-full { width: 100%; }
-        .btn-disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
-        .btn-icon { font-size: 1.2em; line-height: 1; }
-    `,
-    props: {
-        variant: { type: 'string', default: 'primary' },
-        size: { type: 'string', default: 'medium' },
-        disabled: { type: 'boolean', default: false },
-        fullWidth: { type: 'boolean', default: false },
-        icon: { type: 'string', default: '' }
+            transition: all 0.3s;
+            box-shadow: ${variant !== 'outline' ? '0 4px 15px rgba(76,201,240,0.3)' : 'none'};
+        `;
+        
+        return `
+            <button style="${style}" onclick="${onClick}" ${disabled ? 'disabled' : ''}>
+                ${icon ? `<span style="font-size:1.2em;">${icon}</span>` : ''}
+                <span>${text}</span>
+            </button>
+        `;
     }
 });
 
-// بطاقة
-AlaisaiComponents.register('Card', {
-    render: (props, children) => {
+// بطاقة كمومية
+AlaisaiQuantumComponents.register('QuantumCard', {
+    render: (props = {}) => {
         const {
             title = '',
             subtitle = '',
-            image = '',
+            content = '',
             footer = '',
-            padding = 'medium',
-            shadow = 'medium',
-            border = true
+            image = '',
+            width = '300px',
+            gradient = false
         } = props;
         
-        const classes = [
-            'card',
-            `card-padding-${padding}`,
-            `card-shadow-${shadow}`,
-            border ? 'card-border' : ''
-        ].filter(Boolean).join(' ');
+        const style = `
+            background: ${gradient ? 'linear-gradient(135deg, #4cc9f020, #f7258520)' : 'rgba(255,255,255,0.05)'};
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            width: ${width};
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.3s;
+        `;
         
         return `
-            <div class="${classes}">
-                ${image ? `<div class="card-image"><img src="${image}" alt=""></div>` : ''}
-                ${title ? `<h3 class="card-title">${title}</h3>` : ''}
-                ${subtitle ? `<h4 class="card-subtitle">${subtitle}</h4>` : ''}
-                <div class="card-content">${children}</div>
-                ${footer ? `<div class="card-footer">${footer}</div>` : ''}
+            <div style="${style}" class="quantum-card">
+                ${image ? `<img src="${image}" style="width:100%; border-radius:10px; margin-bottom:15px;">` : ''}
+                ${title ? `<h3 style="color:#4cc9f0; margin-bottom:5px;">${title}</h3>` : ''}
+                ${subtitle ? `<h4 style="color:#888; margin-bottom:15px;">${subtitle}</h4>` : ''}
+                <div style="margin-bottom:${footer ? '15px' : '0'};">${content}</div>
+                ${footer ? `<div style="margin-top:15px; padding-top:15px; border-top:1px solid rgba(255,255,255,0.1);">${footer}</div>` : ''}
             </div>
         `;
-    },
-    styles: `
-        .card {
-            background: var(--bg-card, white);
-            border-radius: 12px;
-            overflow: hidden;
-            color: var(--text-primary, #212529);
-        }
-        .card-padding-small { padding: 12px; }
-        .card-padding-medium { padding: 20px; }
-        .card-padding-large { padding: 28px; }
-        .card-shadow-small { box-shadow: var(--shadow-sm, 0 2px 4px rgba(0,0,0,0.1)); }
-        .card-shadow-medium { box-shadow: var(--shadow-md, 0 4px 8px rgba(0,0,0,0.15)); }
-        .card-shadow-large { box-shadow: var(--shadow-lg, 0 8px 16px rgba(0,0,0,0.2)); }
-        .card-border { border: 1px solid var(--border-light, #dee2e6); }
-        .card-title { margin: 0 0 8px 0; font-size: 18px; font-weight: 600; }
-        .card-subtitle { margin: 0 0 12px 0; font-size: 14px; color: var(--text-muted, #6c757d); }
-        .card-image { margin: -20px -20px 20px -20px; }
-        .card-image img { width: 100%; height: auto; display: block; }
-        .card-footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-light, #dee2e6); }
-    `,
-    props: {
-        title: { type: 'string', default: '' },
-        subtitle: { type: 'string', default: '' },
-        image: { type: 'string', default: '' },
-        footer: { type: 'string', default: '' }
     }
 });
 
-// نافذة منبثقة
-AlaisaiComponents.register('Modal', {
-    render: (props, children) => {
-        const {
-            id = 'modal',
-            title = '',
-            show = false,
-            size = 'medium',
-            closeOnClick = true,
-            onClose = ''
-        } = props;
-        
-        const tTitle = title.startsWith('__') ? AlaisaiComponents._t(title.slice(2)) : title;
-        const closeScript = closeOnClick 
-            ? `document.getElementById('${id}').classList.remove('modal-show'); ${onClose ? onClose + '()' : ''}` 
-            : '';
-        
-        const classes = [
-            'modal',
-            `modal-${size}`,
-            show ? 'modal-show' : ''
-        ].filter(Boolean).join(' ');
-        
-        return `
-            <div id="${id}" class="${classes}" onclick="${closeOnClick ? closeScript : ''}">
-                <div class="modal-content" onclick="event.stopPropagation()">
-                    <div class="modal-header">
-                        <h3>${tTitle}</h3>
-                        <button class="modal-close" onclick="${closeScript}">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        ${children}
-                    </div>
-                </div>
-            </div>
-        `;
-    },
-    styles: `
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5);
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        .modal-show { display: flex; }
-        .modal-content {
-            background: var(--bg-card, white);
-            border-radius: 12px;
-            max-width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            color: var(--text-primary, #212529);
-        }
-        .modal-small .modal-content { width: 300px; }
-        .modal-medium .modal-content { width: 500px; }
-        .modal-large .modal-content { width: 800px; }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            border-bottom: 1px solid var(--border-light, #dee2e6);
-        }
-        .modal-header h3 { margin: 0; font-size: 18px; }
-        .modal-close {
-            background: none; border: none; font-size: 24px; cursor: pointer;
-            color: var(--text-muted, #666); padding: 0; line-height: 1;
-        }
-        .modal-close:hover { color: var(--danger, #f72585); }
-        .modal-body { padding: 20px; }
-    `,
-    props: {
-        id: { type: 'string', default: 'modal' },
-        title: { type: 'string', default: '' },
-        show: { type: 'boolean', default: false },
-        size: { type: 'string', default: 'medium' },
-        closeOnClick: { type: 'boolean', default: true }
-    }
-});
-
-// حقل إدخال
-AlaisaiComponents.register('Input', {
-    render: (props) => {
+// حقل إدخال كمومي
+AlaisaiQuantumComponents.register('QuantumInput', {
+    render: (props = {}) => {
         const {
             type = 'text',
             placeholder = '',
             value = '',
-            name = '',
-            required = false,
-            disabled = false,
-            onChange = '',
             label = '',
-            error = ''
+            error = '',
+            disabled = false,
+            required = false,
+            onChange = ''
         } = props;
         
-        const tLabel = label.startsWith('__') ? AlaisaiComponents._t(label.slice(2)) : label;
-        const tPlaceholder = placeholder.startsWith('__') ? AlaisaiComponents._t(placeholder.slice(2)) : placeholder;
-        const tError = error.startsWith('__') ? AlaisaiComponents._t(error.slice(2)) : error;
-        
         return `
-            <div class="input-group ${error ? 'input-error' : ''}">
-                ${label ? `<label class="input-label">${tLabel}</label>` : ''}
+            <div style="margin-bottom:15px;">
+                ${label ? `<label style="display:block; margin-bottom:5px; color:#4cc9f0;">${label}</label>` : ''}
                 <input
                     type="${type}"
-                    name="${name}"
+                    placeholder="${placeholder}"
                     value="${value}"
-                    placeholder="${tPlaceholder}"
-                    ${required ? 'required' : ''}
                     ${disabled ? 'disabled' : ''}
+                    ${required ? 'required' : ''}
                     onchange="${onChange}"
-                    class="input-field"
+                    style="
+                        width:100%;
+                        padding:12px;
+                        background:rgba(255,255,255,0.05);
+                        border:1px solid ${error ? '#f72585' : 'rgba(255,255,255,0.1)'};
+                        border-radius:8px;
+                        color:white;
+                        font-size:14px;
+                        transition:all 0.3s;
+                        outline:none;
+                    "
+                    onfocus="this.style.borderColor='#4cc9f0'"
+                    onblur="this.style.borderColor='${error ? '#f72585' : 'rgba(255,255,255,0.1)'}'"
                 />
-                ${error ? `<span class="input-error-message">${tError}</span>` : ''}
+                ${error ? `<span style="color:#f72585; font-size:12px; margin-top:5px; display:block;">${error}</span>` : ''}
             </div>
         `;
-    },
-    styles: `
-        .input-group { margin-bottom: 15px; }
-        .input-label {
-            display: block; margin-bottom: 5px; font-weight: 500;
-            color: var(--text-primary, #212529);
-        }
-        .input-field {
-            width: 100%; padding: 10px 12px; border: 1px solid var(--border-medium, #ced4da);
-            border-radius: 6px; background: var(--bg-input, white);
-            color: var(--text-primary, #212529); font-size: 14px;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .input-field:focus {
-            outline: none; border-color: var(--primary, #4cc9f0);
-            box-shadow: 0 0 0 3px rgba(76, 201, 240, 0.2);
-        }
-        .input-error .input-field { border-color: var(--danger, #f72585); }
-        .input-error-message {
-            display: block; margin-top: 5px; font-size: 12px; color: var(--danger, #f72585);
-        }
-    `,
-    props: {
-        type: { type: 'string', default: 'text' },
-        placeholder: { type: 'string', default: '' },
-        value: { type: 'string', default: '' },
-        name: { type: 'string', default: '' },
-        required: { type: 'boolean', default: false },
-        disabled: { type: 'boolean', default: false },
-        label: { type: 'string', default: '' },
-        error: { type: 'string', default: '' }
     }
 });
 
-// تسجيل في النواة
+// قائمة منسدلة كمومية
+AlaisaiQuantumComponents.register('QuantumSelect', {
+    render: (props = {}) => {
+        const {
+            options = [],
+            value = '',
+            label = '',
+            onChange = ''
+        } = props;
+        
+        return `
+            <div style="margin-bottom:15px;">
+                ${label ? `<label style="display:block; margin-bottom:5px; color:#4cc9f0;">${label}</label>` : ''}
+                <select
+                    onchange="${onChange}"
+                    style="
+                        width:100%;
+                        padding:12px;
+                        background:rgba(255,255,255,0.05);
+                        border:1px solid rgba(255,255,255,0.1);
+                        border-radius:8px;
+                        color:white;
+                        font-size:14px;
+                        cursor:pointer;
+                        outline:none;
+                    "
+                >
+                    ${options.map(opt => `
+                        <option value="${opt.value}" ${opt.value === value ? 'selected' : ''} 
+                                style="background:#1a1a2a;">
+                            ${opt.label}
+                        </option>
+                    `).join('')}
+                </select>
+            </div>
+        `;
+    }
+});
+
+// مربع اختيار كمومي
+AlaisaiQuantumComponents.register('QuantumCheckbox', {
+    render: (props = {}) => {
+        const {
+            label = '',
+            checked = false,
+            onChange = ''
+        } = props;
+        
+        return `
+            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin-bottom:10px;">
+                <input
+                    type="checkbox"
+                    ${checked ? 'checked' : ''}
+                    onchange="${onChange}"
+                    style="
+                        width:18px;
+                        height:18px;
+                        cursor:pointer;
+                        accent-color:#4cc9f0;
+                    "
+                />
+                <span>${label}</span>
+            </label>
+        `;
+    }
+});
+
+// زر اختيار كمومي
+AlaisaiQuantumComponents.register('QuantumRadio', {
+    render: (props = {}) => {
+        const {
+            name = 'radio',
+            options = [],
+            value = '',
+            onChange = ''
+        } = props;
+        
+        return `
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                ${options.map(opt => `
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                        <input
+                            type="radio"
+                            name="${name}"
+                            value="${opt.value}"
+                            ${opt.value === value ? 'checked' : ''}
+                            onchange="${onChange}"
+                            style="
+                                width:18px;
+                                height:18px;
+                                cursor:pointer;
+                                accent-color:#4cc9f0;
+                            "
+                        />
+                        <span>${opt.label}</span>
+                    </label>
+                `).join('')}
+            </div>
+        `;
+    }
+});
+
+// شريط تقدم كمومي
+AlaisaiQuantumComponents.register('QuantumProgress', {
+    render: (props = {}) => {
+        const {
+            value = 0,
+            max = 100,
+            showLabel = true,
+            color = '#4cc9f0'
+        } = props;
+        
+        const percent = (value / max) * 100;
+        
+        return `
+            <div style="width:100%;">
+                <div style="
+                    width:100%;
+                    height:8px;
+                    background:rgba(255,255,255,0.1);
+                    border-radius:4px;
+                    overflow:hidden;
+                ">
+                    <div style="
+                        width:${percent}%;
+                        height:100%;
+                        background:${color};
+                        transition:width 0.3s;
+                    "></div>
+                </div>
+                ${showLabel ? `
+                    <div style="text-align:center; margin-top:5px; font-size:12px; color:#888;">
+                        ${value} / ${max}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+});
+
+// مؤشر كمومي
+AlaisaiQuantumComponents.register('QuantumBadge', {
+    render: (props = {}) => {
+        const {
+            text = '',
+            variant = 'primary',
+            size = 'medium'
+        } = props;
+        
+        const variants = {
+            primary: '#4cc9f0',
+            success: '#4ade80',
+            danger: '#f72585',
+            warning: '#fbbf24',
+            info: '#888'
+        };
+        
+        const sizes = {
+            small: '4px 8px',
+            medium: '6px 12px',
+            large: '8px 16px'
+        };
+        
+        return `
+            <span style="
+                display:inline-block;
+                padding:${sizes[size]};
+                background:${variants[variant]}20;
+                border:1px solid ${variants[variant]};
+                color:${variants[variant]};
+                border-radius:20px;
+                font-size:${size === 'small' ? '10px' : size === 'medium' ? '12px' : '14px'};
+                font-weight:500;
+            ">
+                ${text}
+            </span>
+        `;
+    }
+});
+
+// تنبيه كمومي
+AlaisaiQuantumComponents.register('QuantumAlert', {
+    render: (props = {}) => {
+        const {
+            message = '',
+            type = 'info',
+            dismissible = false
+        } = props;
+        
+        const types = {
+            success: { bg: '#4ade8020', border: '#4ade80', icon: '✅' },
+            error: { bg: '#f7258520', border: '#f72585', icon: '❌' },
+            warning: { bg: '#fbbf2420', border: '#fbbf24', icon: '⚠️' },
+            info: { bg: '#4cc9f020', border: '#4cc9f0', icon: 'ℹ️' }
+        };
+        
+        const typeConfig = types[type] || types.info;
+        
+        return `
+            <div style="
+                padding:15px;
+                background:${typeConfig.bg};
+                border-right:4px solid ${typeConfig.border};
+                border-radius:8px;
+                display:flex;
+                align-items:center;
+                gap:10px;
+                margin-bottom:15px;
+            ">
+                <span style="font-size:20px;">${typeConfig.icon}</span>
+                <span style="flex:1;">${message}</span>
+                ${dismissible ? `
+                    <button style="background:none; border:none; color:white; cursor:pointer; font-size:18px;">&times;</button>
+                ` : ''}
+            </div>
+        `;
+    }
+});
+
+// قائمة كمومية
+AlaisaiQuantumComponents.register('QuantumList', {
+    render: (props = {}) => {
+        const {
+            items = [],
+            ordered = false
+        } = props;
+        
+        const tag = ordered ? 'ol' : 'ul';
+        
+        return `
+            <${tag} style="
+                list-style:${ordered ? 'decimal' : 'none'};
+                padding:0;
+                margin:0;
+            ">
+                ${items.map(item => `
+                    <li style="
+                        padding:10px;
+                        border-bottom:1px solid rgba(255,255,255,0.05);
+                        display:flex;
+                        align-items:center;
+                        gap:10px;
+                    ">
+                        ${!ordered ? `<span style="color:#4cc9f0;">•</span>` : ''}
+                        <span>${item}</span>
+                    </li>
+                `).join('')}
+            </${tag}>
+        `;
+    }
+});
+
+// جدول كمومي
+AlaisaiQuantumComponents.register('QuantumTable', {
+    render: (props = {}) => {
+        const {
+            headers = [],
+            rows = []
+        } = props;
+        
+        return `
+            <table style="
+                width:100%;
+                border-collapse:collapse;
+                background:rgba(255,255,255,0.02);
+                border-radius:10px;
+                overflow:hidden;
+            ">
+                <thead>
+                    <tr style="background:rgba(76,201,240,0.1);">
+                        ${headers.map(header => `
+                            <th style="padding:12px; text-align:left; color:#4cc9f0;">${header}</th>
+                        `).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows.map(row => `
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                            ${headers.map(header => `
+                                <td style="padding:12px;">${row[header] || ''}</td>
+                            `).join('')}
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+});
+
+// تبويبات كمومية
+AlaisaiQuantumComponents.register('QuantumTabs', {
+    render: (props = {}) => {
+        const {
+            tabs = [],
+            activeTab = 0
+        } = props;
+        
+        return `
+            <div>
+                <div style="
+                    display:flex;
+                    gap:10px;
+                    border-bottom:1px solid rgba(255,255,255,0.1);
+                    margin-bottom:20px;
+                ">
+                    ${tabs.map((tab, index) => `
+                        <button style="
+                            padding:10px 20px;
+                            background:${index === activeTab ? '#4cc9f0' : 'transparent'};
+                            border:none;
+                            color:${index === activeTab ? 'black' : 'white'};
+                            cursor:pointer;
+                            border-radius:5px 5px 0 0;
+                            transition:all 0.3s;
+                        ">
+                            ${tab.title}
+                        </button>
+                    `).join('')}
+                </div>
+                <div>
+                    ${tabs[activeTab]?.content || ''}
+                </div>
+            </div>
+        `;
+    }
+});
+
+// نموذج كمومي
+AlaisaiQuantumComponents.register('QuantumForm', {
+    render: (props = {}) => {
+        const {
+            fields = [],
+            onSubmit = ''
+        } = props;
+        
+        return `
+            <form onsubmit="${onSubmit}; return false;">
+                ${fields.map(field => {
+                    switch(field.type) {
+                        case 'text':
+                        case 'email':
+                        case 'password':
+                            return AlaisaiQuantumComponents.render('QuantumInput', field);
+                        case 'select':
+                            return AlaisaiQuantumComponents.render('QuantumSelect', field);
+                        case 'checkbox':
+                            return AlaisaiQuantumComponents.render('QuantumCheckbox', field);
+                        case 'radio':
+                            return AlaisaiQuantumComponents.render('QuantumRadio', field);
+                        default:
+                            return '';
+                    }
+                }).join('')}
+                <button type="submit" style="
+                    padding:12px 24px;
+                    background:#4cc9f0;
+                    border:none;
+                    border-radius:8px;
+                    color:black;
+                    font-weight:bold;
+                    cursor:pointer;
+                    width:100%;
+                    margin-top:10px;
+                ">
+                    إرسال
+                </button>
+            </form>
+        `;
+    }
+});
+
 if (window.AlaisaiCore) {
-    AlaisaiCore.registerModule('AlaisaiComponents', AlaisaiComponents);
+    AlaisaiCore.registerModule('AlaisaiQuantumComponents', AlaisaiQuantumComponents);
 }
 
-window.AlaisaiComponents = AlaisaiComponents;
-console.log('🧩 Alaisai Components جاهزة للعمل (نسخة متكاملة)');
+window.AlaisaiQuantumComponents = AlaisaiQuantumComponents;
+console.log('🧩 Quantum Components ready');

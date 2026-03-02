@@ -1,58 +1,144 @@
 {
-  "version": "2.0.0",
+  "version": "3.0.0",
   "plugins": {
     "enabled": [
       "core-system",
-      "file-manager"
+      "file-manager",
+      "quantum-core",
+      "ai-assistant",
+      "hardware-access"
     ],
     "disabled": [
       "analytics",
-      "backup-scheduler"
+      "backup-scheduler",
+      "telemetry"
     ],
     "registry": {
       "core-system": {
         "name": "النظام الأساسي",
-        "version": "2.0.0",
+        "version": "3.0.0",
         "author": "Alaisai",
+        "description": "النواة الأساسية للنظام",
         "enabled": true,
         "dependencies": [],
+        "permissions": ["system:all"],
         "settings": {
           "debug": false,
           "logLevel": "info"
         }
       },
       "file-manager": {
-        "name": "مدير الملفات",
-        "version": "2.0.0",
+        "name": "مدير الملفات المتقدم",
+        "version": "3.0.0",
         "author": "Alaisai",
+        "description": "إدارة الملفات محلياً وسحابياً",
         "enabled": true,
         "dependencies": ["core-system"],
+        "permissions": ["files:read", "files:write", "files:delete"],
         "settings": {
-          "maxUploadSize": 10485760,
-          "allowedTypes": ["jpg", "png", "pdf", "txt"]
+          "maxUploadSize": 104857600,
+          "allowedTypes": ["*"],
+          "github": true,
+          "webdav": true,
+          "ipfs": true
+        }
+      },
+      "quantum-core": {
+        "name": "النواة الكمومية",
+        "version": "3.0.0",
+        "author": "Alaisai",
+        "description": "محاكاة معالجة كمومية",
+        "enabled": true,
+        "dependencies": ["core-system"],
+        "permissions": ["quantum:simulate"],
+        "settings": {
+          "qubits": 8,
+          "entanglement": true,
+          "coherence": 0.99
+        }
+      },
+      "ai-assistant": {
+        "name": "المساعد الذكي",
+        "version": "3.0.0",
+        "author": "Alaisai",
+        "description": "مساعد ذكي يتعلم من المستخدم",
+        "enabled": true,
+        "dependencies": ["core-system"],
+        "permissions": ["ai:learn", "ai:predict"],
+        "settings": {
+          "learning": true,
+          "memorySize": 1000,
+          "suggestions": true
+        }
+      },
+      "hardware-access": {
+        "name": "الوصول للأجهزة",
+        "version": "3.0.0",
+        "author": "Alaisai",
+        "description": "التواصل مع الأجهزة المتصلة",
+        "enabled": true,
+        "dependencies": ["core-system"],
+        "permissions": ["hardware:camera", "hardware:microphone", "hardware:usb"],
+        "settings": {
+          "camera": true,
+          "microphone": true,
+          "bluetooth": true,
+          "usb": true
         }
       },
       "analytics": {
         "name": "الإحصائيات",
         "version": "1.2.0",
         "author": "Alaisai",
+        "description": "تحليل استخدام النظام",
         "enabled": false,
         "dependencies": ["core-system"],
+        "permissions": ["analytics:collect"],
         "settings": {
           "trackPageViews": true,
-          "trackEvents": true
+          "trackEvents": true,
+          "trackErrors": true
+        }
+      },
+      "backup-scheduler": {
+        "name": "النسخ الاحتياطي المجدول",
+        "version": "1.1.0",
+        "author": "Alaisai",
+        "description": "نسخ احتياطي تلقائي",
+        "enabled": false,
+        "dependencies": ["core-system", "file-manager"],
+        "permissions": ["backup:create", "backup:restore"],
+        "settings": {
+          "interval": 86400,
+          "maxBackups": 10,
+          "locations": ["local", "github"]
         }
       }
     }
   },
   "hooks": {
-    "beforeLoad": [],
-    "afterLoad": [],
-    "beforeUnload": []
+    "beforeLoad": [
+      "core-system",
+      "quantum-core"
+    ],
+    "afterLoad": [
+      "file-manager",
+      "ai-assistant"
+    ],
+    "beforeUnload": [
+      "backup-scheduler"
+    ]
   },
   "permissions": {
     "install": ["admin"],
     "uninstall": ["admin"],
-    "configure": ["admin", "manager"]
+    "configure": ["admin", "manager"],
+    "enable": ["admin"],
+    "disable": ["admin"]
+  },
+  "marketplace": {
+    "url": "https://api.alaisai.com/addons",
+    "autoUpdate": false,
+    "verifiedOnly": true
   }
 }

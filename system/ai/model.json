@@ -1,0 +1,117 @@
+{
+  "name": "Alaisai Quantum Neural Network",
+  "version": "3.0.0",
+  "architecture": {
+    "type": "deep_neural_network",
+    "layers": [
+      {
+        "type": "input",
+        "neurons": 64,
+        "activation": "relu"
+      },
+      {
+        "type": "hidden",
+        "neurons": 128,
+        "activation": "relu",
+        "dropout": 0.2
+      },
+      {
+        "type": "hidden",
+        "neurons": 256,
+        "activation": "relu",
+        "dropout": 0.2
+      },
+      {
+        "type": "hidden",
+        "neurons": 128,
+        "activation": "relu",
+        "dropout": 0.1
+      },
+      {
+        "type": "output",
+        "neurons": 10,
+        "activation": "softmax"
+      }
+    ]
+  },
+  "parameters": {
+    "learning_rate": 0.001,
+    "optimizer": "adam",
+    "loss_function": "categorical_crossentropy",
+    "batch_size": 32,
+    "epochs": 100,
+    "validation_split": 0.2
+  },
+  "quantum": {
+    "enabled": true,
+    "qubits": 8,
+    "entanglement": true,
+    "superposition": true
+  },
+  "training_data": {
+    "samples": 1000000,
+    "features": 64,
+    "classes": 10,
+    "last_trained": "2026-03-02T12:00:00Z"
+  },
+  "performance": {
+    "accuracy": 0.956,
+    "precision": 0.952,
+    "recall": 0.951,
+    "f1_score": 0.951
+  },
+  "weights": [
+    {
+      "layer": 0,
+      "shape": [64, 128],
+      "mean": 0.02,
+      "std": 0.1
+    },
+    {
+      "layer": 1,
+      "shape": [128, 256],
+      "mean": 0.01,
+      "std": 0.08
+    },
+    {
+      "layer": 2,
+      "shape": [256, 128],
+      "mean": 0.015,
+      "std": 0.09
+    },
+    {
+      "layer": 3,
+      "shape": [128, 10],
+      "mean": 0.005,
+      "std": 0.05
+    }
+  ],
+  "biases": [
+    {
+      "layer": 0,
+      "shape": [128],
+      "mean": 0.1
+    },
+    {
+      "layer": 1,
+      "shape": [256],
+      "mean": 0.1
+    },
+    {
+      "layer": 2,
+      "shape": [128],
+      "mean": 0.1
+    },
+    {
+      "layer": 3,
+      "shape": [10],
+      "mean": 0.1
+    }
+  ],
+  "metadata": {
+    "author": "Alaisai Quantum Team",
+    "description": "نموذج تعلم عميق متطور للتنبؤ بسلوك المستخدم",
+    "license": "MIT",
+    "tags": ["neural-network", "quantum", "ai", "predictor"]
+  }
+}

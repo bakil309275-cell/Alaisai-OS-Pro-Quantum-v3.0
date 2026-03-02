@@ -1,87 +1,139 @@
 {
-  "version": "2.0.0",
+  "version": "3.0.0",
   "errors": {
     "400": {
       "code": "BAD_REQUEST",
       "message": "طلب غير صالح",
-      "description": "البيانات المرسلة غير صحيحة"
+      "description": "البيانات المرسلة غير صحيحة",
+      "action": "تحقق من البيانات وأعد المحاولة"
     },
     "401": {
       "code": "UNAUTHORIZED",
       "message": "غير مصرح",
-      "description": "يجب تسجيل الدخول أولاً"
+      "description": "يجب تسجيل الدخول أولاً",
+      "action": "سجل الدخول وحاول مرة أخرى"
     },
     "403": {
       "code": "FORBIDDEN",
       "message": "ممنوع",
-      "description": "لا تملك الصلاحية للوصول"
+      "description": "لا تملك الصلاحية للوصول",
+      "action": "تواصل مع مسؤول النظام"
     },
     "404": {
       "code": "NOT_FOUND",
       "message": "غير موجود",
-      "description": "الصفحة أو المورد غير موجود"
+      "description": "الصفحة أو المورد غير موجود",
+      "action": "تحقق من الرابط وحاول مرة أخرى"
     },
     "408": {
       "code": "TIMEOUT",
       "message": "انتهت المهلة",
-      "description": "استغرق الطلب وقتاً طويلاً"
+      "description": "استغرق الطلب وقتاً طويلاً",
+      "action": "حاول مرة أخرى لاحقاً"
     },
     "409": {
       "code": "CONFLICT",
       "message": "تعارض",
-      "description": "توجد بيانات متعارضة"
+      "description": "توجد بيانات متعارضة",
+      "action": "حل التعارض وحاول مرة أخرى"
     },
     "422": {
       "code": "VALIDATION_ERROR",
       "message": "خطأ في التحقق",
-      "description": "البيانات المدخلة غير صالحة"
+      "description": "البيانات المدخلة غير صالحة",
+      "action": "تحقق من صحة البيانات"
     },
     "429": {
       "code": "TOO_MANY_REQUESTS",
       "message": "طلبات كثيرة",
-      "description": "تجاوزت حد الطلبات المسموح"
+      "description": "تجاوزت حد الطلبات المسموح",
+      "action": "انتظر قليلاً وحاول مرة أخرى"
     },
     "500": {
       "code": "INTERNAL_ERROR",
       "message": "خطأ داخلي",
-      "description": "حدث خطأ في النظام"
+      "description": "حدث خطأ في النظام",
+      "action": "حاول مرة أخرى لاحقاً"
     },
     "502": {
       "code": "BAD_GATEWAY",
       "message": "بوابة غير صالحة",
-      "description": "خطأ في الاتصال بالخادم"
+      "description": "خطأ في الاتصال بالخادم",
+      "action": "تحقق من اتصالك بالإنترنت"
     },
     "503": {
       "code": "SERVICE_UNAVAILABLE",
       "message": "الخدمة غير متاحة",
-      "description": "النظام تحت الصيانة"
+      "description": "النظام تحت الصيانة",
+      "action": "حاول مرة أخرى لاحقاً"
+    },
+    "504": {
+      "code": "GATEWAY_TIMEOUT",
+      "message": "انتهت مهلة البوابة",
+      "description": "الخادم لم يستجب في الوقت المناسب",
+      "action": "حاول مرة أخرى لاحقاً"
     }
   },
   "system": {
     "DB_ERROR": {
       "code": "DATABASE_ERROR",
       "message": "خطأ في قاعدة البيانات",
-      "severity": "high"
+      "severity": "high",
+      "action": "جاري محاولة الإصلاح التلقائي"
     },
     "API_ERROR": {
       "code": "API_ERROR",
       "message": "خطأ في API",
-      "severity": "medium"
+      "severity": "medium",
+      "action": "تحقق من الاتصال"
     },
     "AUTH_ERROR": {
       "code": "AUTHENTICATION_ERROR",
       "message": "خطأ في المصادقة",
-      "severity": "high"
+      "severity": "high",
+      "action": "أعد تسجيل الدخول"
     },
     "PERMISSION_ERROR": {
       "code": "PERMISSION_DENIED",
       "message": "صلاحية مرفوضة",
-      "severity": "medium"
+      "severity": "medium",
+      "action": "طلب الصلاحية من المسؤول"
     },
     "VALIDATION_ERROR": {
       "code": "VALIDATION_FAILED",
       "message": "فشل التحقق",
-      "severity": "low"
+      "severity": "low",
+      "action": "تصحيح البيانات المدخلة"
+    },
+    "NETWORK_ERROR": {
+      "code": "NETWORK_ERROR",
+      "message": "خطأ في الشبكة",
+      "severity": "medium",
+      "action": "تحقق من اتصالك بالإنترنت"
+    },
+    "QUANTUM_ERROR": {
+      "code": "QUANTUM_DECOHERENCE",
+      "message": "فقدان الترابط الكمومي",
+      "severity": "quantum",
+      "action": "إعادة ضبط الحالة الكمومية"
+    },
+    "AI_ERROR": {
+      "code": "NEURAL_NETWORK_ERROR",
+      "message": "خطأ في الشبكة العصبية",
+      "severity": "medium",
+      "action": "إعادة تهيئة النموذج"
+    },
+    "STORAGE_ERROR": {
+      "code": "STORAGE_FULL",
+      "message": "مساحة التخزين ممتلئة",
+      "severity": "high",
+      "action": "حذف ملفات غير ضرورية"
+    },
+    "ENCRYPTION_ERROR": {
+      "code": "ENCRYPTION_FAILED",
+      "message": "فشل التشفير",
+      "severity": "critical",
+      "action": "تحقق من المفاتيح"
     }
   },
   "messages": {
@@ -91,7 +143,14 @@
       "save_success": "تم الحفظ بنجاح",
       "save_error": "فشل الحفظ",
       "delete_confirm": "هل أنت متأكد من الحذف؟",
-      "unsaved_changes": "لديك تغييرات غير محفوظة"
+      "unsaved_changes": "لديك تغييرات غير محفوظة",
+      "loading": "جاري التحميل...",
+      "processing": "جاري المعالجة...",
+      "welcome": "مرحباً بك في النظام الكمومي",
+      "goodbye": "إلى اللقاء",
+      "quantum_ready": "النظام الكمومي جاهز",
+      "ai_ready": "الذكاء الاصطناعي نشط",
+      "quantum_error": "خطأ كمومي، إعادة المحاولة..."
     },
     "en": {
       "connection_lost": "Internet connection lost",
@@ -99,7 +158,14 @@
       "save_success": "Saved successfully",
       "save_error": "Save failed",
       "delete_confirm": "Are you sure you want to delete?",
-      "unsaved_changes": "You have unsaved changes"
+      "unsaved_changes": "You have unsaved changes",
+      "loading": "Loading...",
+      "processing": "Processing...",
+      "welcome": "Welcome to Quantum System",
+      "goodbye": "Goodbye",
+      "quantum_ready": "Quantum system ready",
+      "ai_ready": "AI active",
+      "quantum_error": "Quantum error, retrying..."
     }
   }
 }

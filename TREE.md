@@ -1,54 +1,78 @@
-📁 Alaisai_OS_Pro/                              # المجلد الرئيسي
+📁 Alaisai_OS_Pro/
 │
-├── 📄 index.html                                # مشغل النظام الرئيسي
-├── 📄 manifest.json                              # ملف PWA
-├── 📄 sw.js                                      # Service Worker
-├── 📄 TREE.md                                    # الهيكل الشجري
+├── 📄 index.html                    # النواة المركزية + AI
+├── 📄 manifest.json                  # PWA متقدم
+├── 📄 sw.js                          # Service Worker ذكي
+├── 📄 robots.txt                      # SEO محسن
+├── 📄 README.md                       # وثائق أسطورية
+├── 📄 LICENSE                         # رخصة MIT
 │
-├── 📁 system/                                    # ملفات النظام الأساسية
+├── 📁 system/
+│   ├── 📁 core/
+│   │   ├── 📄 core.js                 # نواة كمومية
+│   │   ├── 📄 quantum-core.js         # معالج كمي
+│   │   ├── 📄 neural-core.js          # شبكة عصبية
+│   │   ├── 📄 evolution.js            # تطور ذاتي
+│   │   ├── 📄 security.js             # أمان مقاوم للكم
+│   │   ├── 📄 database.js              # قاعدة بيانات موزعة
+│   │   ├── 📄 api.js                    # API ذكية
+│   │   └── 📄 addons-manager.js         # مدير إضافات متطور
 │   │
-│   ├── 📁 core/                                   # نواة النظام
-│   │   ├── 📄 core.js                               # نواة النظام المركزية
-│   │   ├── 📄 api.js                                 # واجهة برمجة التطبيقات
-│   │   ├── 📄 database.js                             # نظام قاعدة البيانات (IndexedDB)
-│   │   ├── 📄 security.js                             # نظام الأمان والحماية (Web Crypto)
-│   │   └── 📄 addons-manager.js                        # مدير الإضافات
+│   ├── 📁 ai/
+│   │   ├── 📄 neural-assistant.js      # مساعد عصبي
+│   │   ├── 📄 predictor.js              # متنبئ ذكي
+│   │   ├── 📄 learner.js                 # متعلم ذاتي
+│   │   └── 📄 model.json                  # نموذج AI
 │   │
-│   ├── 📁 ui/                                       # ملفات واجهة المستخدم
-│   │   ├── 📄 i18n.js                                 # نظام الترجمة والدولنة
-│   │   ├── 📄 ui-kit.js                                # أدوات واجهة المستخدم (إشعارات، حوارات)
-│   │   ├── 📄 components.js                             # مكتبة المكونات (زر، بطاقة، نافذة)
-│   │   ├── 📄 file-manager.js                           # مدير الملفات (GitHub API)
-│   │   ├── 📄 validators.js                             # أدوات التحقق من البيانات
-│   │   ├── 📄 helpers.js                                # دوال مساعدة عامة
-│   │   └── 📄 formatters.js                             # أدوات تنسيق البيانات
+│   ├── 📁 storage/
+│   │   ├── 📄 distributed.js            # تخزين موزع
+│   │   ├── 📄 ipfs-bridge.js            # بوابة IPFS
+│   │   ├── 📄 p2p-sync.js                # مزامرة P2P
+│   │   └── 📄 blockchain-store.js        # تخزين بلوكشين
 │   │
-│   └── 📁 config/                                   # ملفات التهيئة (اختياري، يمكن وضعها في addons)
-│       ├── 📄 routes.json                             # نظام المسارات
-│       ├── 📄 plugins.json                             # إدارة الإضافات
-│       ├── 📄 errors.json                              # نظام الأخطاء
-│       └── 📄 settings.json                            # إعدادات النظام
+│   ├── 📁 ui/
+│   │   ├── 📄 i18n.js                    # ترجمة ذكية
+│   │   ├── 📄 ui-kit.js                   # مكتبة UI
+│   │   ├── 📄 components.js                # مكونات تفاعلية
+│   │   ├── 📄 file-manager.js               # مدير ملفات أسطوري
+│   │   ├── 📄 validators.js                  # مدققات ذكية
+│   │   ├── 📄 helpers.js                     # مساعدات متطورة
+│   │   └── 📄 formatters.js                   # منسقات بيانات
+│   │
+│   ├── 📁 hardware/
+│   │   ├── 📄 abstraction.js                # تجريد الأجهزة
+│   │   ├── 📄 camera.js                       # كاميرا
+│   │   ├── 📄 microphone.js                   # ميكروفون
+│   │   ├── 📄 bluetooth.js                     # بلوتوث
+│   │   ├── 📄 usb.js                            # USB
+│   │   └── 📄 serial.js                          # منفذ تسلسلي
+│   │
+│   └── 📁 config/
+│       ├── 📄 routes.json                      # مسارات ذكية
+│       ├── 📄 plugins.json                      # إضافات متقدمة
+│       ├── 📄 errors.json                        # أخطاء محكية
+│       └── 📄 settings.json                       # إعدادات كمومية
 │
-├── 📁 assets/                                      # ملفات الوسائط
+├── 📁 assets/
+│   ├── 📁 images/
+│   │   ├── 📄 icon-72.png ... icon-512.png      # أيقونات PWA
+│   │   └── 📄 favicon.ico                         # أيقونة الموقع
 │   │
-│   ├── 📁 images/                                   # الصور
-│   │   ├── 📄 icon-72.png                             # أيقونات PWA
-│   │   ├── 📄 icon-128.png
-│   │   ├── 📄 icon-144.png
-│   │   ├── 📄 icon-152.png
-│   │   ├── 📄 icon-192.png
-│   │   ├── 📄 icon-384.png
-│   │   └── 📄 icon-512.png
+│   ├── 📁 css/
+│   │   ├── 📄 themes.css                          # ثيمات متطورة
+│   │   └── 📄 animations.css                       # حركات سينمائية
 │   │
-│   └── 📁 css/                                      # ملفات الأنماط
-│       ├── 📄 themes.css                              # نظام الثيمات (داكن، فاتح، أزرق...)
-│       └── 📄 animations.css                          # التأثيرات الحركية
+│   └── 📁 models/
+│       └── 📄 neural-net.json                      # نموذج عصبي
 │
-├── 📁 addons/                                     # الإضافات المعزولة (تخزين محلي / IndexedDB)
-│   └── ... (يتم إنشاؤها عبر مدير الإضافات)
-│
-├── 📁 backups/                                     # النسخ الاحتياطية
+├── 📁 addons/                                      # إضافات معزولة
+│   ├── 📄 app_1.json
+│   ├── 📄 app_2.json
+│   ├── 📄 app_3.json
 │   └── ...
 │
-└── 📁 temp/                                         # الملفات المؤقتة
+├── 📁 backups/                                     # نسخ احتياطية
+│   └── ...
+│
+└── 📁 temp/                                         # ملفات مؤقتة
     └── ...

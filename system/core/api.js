@@ -1,14 +1,105 @@
 /**
- * Alaisai API - واجهة برمجة التطبيقات المركزية مع أمان متكامل
- * @version 2.0.0
+ * Alaisai Quantum API - واجهة برمجة تطبيقات كمومية
+ * @version 3.0.0
  */
 
-const AlaisaiAPI = {
-    version: '2.0.0',
+const AlaisaiQuantumAPI = {
+    version: '3.0.0',
     endpoints: new Map(),
     middleware: [],
+    cache: new Map(),
     
-    // تسجيل نقطة نهاية
+    init() {
+        console.log('🔌 Quantum API initializing...');
+        
+        // تسجيل النقاط الأساسية
+        this.registerDefaultEndpoints();
+        
+        return this;
+    },
+    
+    registerDefaultEndpoints() {
+        // نظام
+        this.register('system.info', async () => ({
+            version: '3.0.0',
+            quantum: true,
+            ai: true,
+            uptime: Date.now() - window._startTime
+        }));
+        
+        this.register('system.health', async () => ({
+            status: 'healthy',
+            memory: performance.memory ? {
+                used: performance.memory.usedJSHeapSize,
+                total: performance.memory.jsHeapSizeLimit
+            } : null,
+            timestamp: Date.now()
+        }));
+        
+        // الأمان
+        this.register('security.status', async () => {
+            if (window.AlaisaiQuantumSecurity) {
+                return window.AlaisaiQuantumSecurity.getSecurityStatus();
+            }
+            return { error: 'Security module not available' };
+        });
+        
+        // قاعدة البيانات
+        this.register('db.stats', async () => {
+            if (window.AlaisaiDistributedDB) {
+                return await window.AlaisaiDistributedDB.stats();
+            }
+            return { error: 'Database not available' };
+        });
+        
+        // التخزين الموزع
+        this.register('storage.status', async () => {
+            if (window.AlaisaiDistributedStorage) {
+                return {
+                    providers: Array.from(window.AlaisaiDistributedStorage.providers.keys()),
+                    peers: Array.from(window.AlaisaiDistributedStorage.peers)
+                };
+            }
+            return { error: 'Storage not available' };
+        });
+        
+        // الذكاء الاصطناعي
+        this.register('ai.predict', async ({ input }) => {
+            if (window.AlaisaiNeuralCore) {
+                return window.AlaisaiNeuralCore.predict(input);
+            }
+            return { error: 'AI not available' };
+        });
+        
+        // الأجهزة
+        this.register('hardware.devices', async () => {
+            if (window.AlaisaiHardware) {
+                return window.AlaisaiHardware.devices;
+            }
+            return { error: 'Hardware module not available' };
+        });
+        
+        // الملفات
+        this.register('files.list', async ({ path, source = 'local' }) => {
+            if (window.AlaisaiFileManager) {
+                if (source === 'github') {
+                    return await window.AlaisaiFileManager.listGitHubContents(path);
+                } else {
+                    return await window.AlaisaiFileManager.readOPFSDirectory(path);
+                }
+            }
+            return { error: 'File manager not available' };
+        });
+        
+        // الإضافات
+        this.register('addons.list', async () => {
+            if (window.AlaisaiAddons) {
+                return window.AlaisaiAddons.listAddons();
+            }
+            return { error: 'Addons manager not available' };
+        });
+    },
+    
     register(endpoint, handler, options = {}) {
         this.endpoints.set(endpoint, {
             handler,
@@ -16,168 +107,171 @@ const AlaisaiAPI = {
                 auth: options.auth || false,
                 rateLimit: options.rateLimit || 0,
                 cache: options.cache || false,
-                permissions: options.permissions || [],
+                cacheTTL: options.cacheTTL || 60000,
                 ...options
             },
             hits: 0,
-            createdAt: new Date().toISOString()
+            createdAt: Date.now()
         });
-        console.log(`🔌 تم تسجيل API: ${endpoint}`);
-        return this;
+        
+        console.log(`📡 API endpoint registered: ${endpoint}`);
     },
     
-    // استدعاء API
-    async call(endpoint, data = {}, context = {}) {
+    async call(endpoint, params = {}, context = {}) {
         const api = this.endpoints.get(endpoint);
         if (!api) {
-            return this._error('ENDPOINT_NOT_FOUND', `النقطة ${endpoint} غير موجودة`);
+            return {
+                success: false,
+                error: 'ENDPOINT_NOT_FOUND',
+                message: `Endpoint ${endpoint} not found`
+            };
+        }
+        
+        // التحقق من الكاش
+        if (api.options.cache) {
+            const cacheKey = `${endpoint}:${JSON.stringify(params)}`;
+            const cached = this.cache.get(cacheKey);
+            if (cached && Date.now() - cached.timestamp < api.options.cacheTTL) {
+                return {
+                    success: true,
+                    data: cached.data,
+                    fromCache: true
+                };
+            }
         }
         
         // تنفيذ middleware
         for (const mw of this.middleware) {
-            const result = await mw({ endpoint, data, context, api });
+            const result = await mw({ endpoint, params, context });
             if (result === false) {
-                return this._error('MIDDLEWARE_BLOCKED', 'تم رفض الطلب');
+                return {
+                    success: false,
+                    error: 'MIDDLEWARE_BLOCKED',
+                    message: 'Request blocked by middleware'
+                };
             }
         }
         
         // التحقق من المصادقة
         if (api.options.auth) {
             if (!context.token) {
-                return this._error('UNAUTHORIZED', 'يتطلب تسجيل الدخول');
+                return {
+                    success: false,
+                    error: 'UNAUTHORIZED',
+                    message: 'Authentication required'
+                };
             }
             
-            // التحقق من التوكن باستخدام AlaisaiSecurity
-            if (window.AlaisaiSecurity) {
-                const session = await AlaisaiSecurity.verifyToken(context.token);
+            if (window.AlaisaiQuantumSecurity) {
+                const session = window.AlaisaiQuantumSecurity.verifySession(context.token);
                 if (!session) {
-                    return this._error('INVALID_TOKEN', 'التوكن غير صالح أو منتهي');
+                    return {
+                        success: false,
+                        error: 'INVALID_TOKEN',
+                        message: 'Invalid or expired token'
+                    };
                 }
                 context.user = session;
-            } else {
-                // حل بديل بسيط
-                if (context.token !== 'valid_token') {
-                    return this._error('UNAUTHORIZED', 'توكن غير صحيح');
-                }
             }
         }
         
-        // التحقق من الصلاحيات
-        if (api.options.permissions.length > 0 && context.user) {
-            if (!window.AlaisaiSecurity) {
-                console.warn('⚠️ نظام الأمان غير متوفر، تخطي التحقق من الصلاحيات');
-            } else {
-                const hasPermission = api.options.permissions.every(perm =>
-                    AlaisaiSecurity.checkPermission(context.user.userId, perm)
-                );
-                if (!hasPermission) {
-                    return this._error('FORBIDDEN', 'لا تملك الصلاحية');
-                }
-            }
-        }
-        
-        // تحديد معدل الطلبات (إذا كان متوفراً)
-        if (api.options.rateLimit > 0 && window.AlaisaiSecurity) {
-            const key = `api:${endpoint}:${context.user?.userId || context.ip || 'anonymous'}`;
-            const rateCheck = AlaisaiSecurity.checkRateLimit(key, api.options.rateLimit, 60000);
-            if (!rateCheck.allowed) {
-                return this._error('RATE_LIMITED', 'تجاوزت حد الطلبات', rateCheck);
+        // تحديد معدل الطلبات
+        if (api.options.rateLimit > 0) {
+            const key = `rate:${endpoint}:${context.user?.userId || context.ip || 'anonymous'}`;
+            const rateCheck = window.AlaisaiQuantumSecurity?.checkRateLimit(
+                key, 
+                api.options.rateLimit, 
+                60000
+            );
+            
+            if (rateCheck && !rateCheck.allowed) {
+                return {
+                    success: false,
+                    error: 'RATE_LIMITED',
+                    message: 'Rate limit exceeded',
+                    resetAt: rateCheck.resetAt
+                };
             }
         }
         
         try {
             api.hits++;
-            const result = await api.handler(data, context);
-            return {
+            const start = Date.now();
+            const data = await api.handler(params, context);
+            const duration = Date.now() - start;
+            
+            const result = {
                 success: true,
-                data: result,
+                data,
                 meta: {
                     endpoint,
-                    timestamp: new Date().toISOString(),
-                    hits: api.hits
+                    duration,
+                    timestamp: Date.now()
                 }
             };
+            
+            // تخزين في الكاش
+            if (api.options.cache) {
+                const cacheKey = `${endpoint}:${JSON.stringify(params)}`;
+                this.cache.set(cacheKey, {
+                    data,
+                    timestamp: Date.now()
+                });
+                
+                // تنظيف الكاش القديم
+                if (this.cache.size > 100) {
+                    const oldest = Date.now() - 3600000;
+                    for (const [key, value] of this.cache) {
+                        if (value.timestamp < oldest) {
+                            this.cache.delete(key);
+                        }
+                    }
+                }
+            }
+            
+            return result;
         } catch (error) {
-            console.error(`❌ خطأ في API ${endpoint}:`, error);
-            return this._error('HANDLER_ERROR', error.message);
+            return {
+                success: false,
+                error: 'HANDLER_ERROR',
+                message: error.message
+            };
         }
     },
     
-    _error(code, message, extra = {}) {
-        return {
-            success: false,
-            error: code,
-            message,
-            ...extra
-        };
-    },
-    
-    // إضافة middleware
     use(middleware) {
         this.middleware.push(middleware);
         return this;
     },
     
-    // حذف نقطة نهاية
-    unregister(endpoint) {
-        this.endpoints.delete(endpoint);
-        return this;
+    async batch(calls) {
+        const results = {};
+        
+        for (const [key, { endpoint, params }] of Object.entries(calls)) {
+            results[key] = await this.call(endpoint, params);
+        }
+        
+        return results;
     },
     
-    // قائمة APIs
-    list() {
-        return Array.from(this.endpoints.entries()).map(([endpoint, api]) => ({
-            endpoint,
-            hits: api.hits,
-            options: api.options,
-            createdAt: api.createdAt
-        }));
-    },
-    
-    // إعادة تعيين الإحصائيات
-    resetStats() {
-        this.endpoints.forEach(api => api.hits = 0);
-        return this;
+    getStats() {
+        return {
+            totalEndpoints: this.endpoints.size,
+            totalHits: Array.from(this.endpoints.values()).reduce((sum, api) => sum + api.hits, 0),
+            cacheSize: this.cache.size,
+            endpoints: Array.from(this.endpoints.entries()).map(([name, api]) => ({
+                name,
+                hits: api.hits,
+                options: api.options
+            }))
+        };
     }
 };
 
-// تسجيل APIs مدمجة تعتمد على النواة والأمان
-AlaisaiAPI.register('system.info', async (data, context) => {
-    const info = window.AlaisaiCore ? AlaisaiCore.info() : { version: '2.0.0' };
-    return {
-        ...info,
-        serverTime: new Date().toISOString()
-    };
-}, { cache: true });
-
-AlaisaiAPI.register('system.ping', () => 'pong', { cache: false });
-
-AlaisaiAPI.register('system.time', () => new Date().toISOString());
-
-AlaisaiAPI.register('auth.login', async ({ username, password }) => {
-    if (!window.AlaisaiSecurity) throw new Error('نظام الأمان غير متوفر');
-    return await AlaisaiSecurity.login(username, password);
-}, { auth: false, rateLimit: 5 });
-
-AlaisaiAPI.register('auth.logout', async (data, context) => {
-    if (!window.AlaisaiSecurity) throw new Error('نظام الأمان غير متوفر');
-    return await AlaisaiSecurity.logout(context.token);
-}, { auth: true });
-
-AlaisaiAPI.register('auth.me', async (data, context) => {
-    return context.user;
-}, { auth: true });
-
-// Middleware لتسجيل الطلبات
-AlaisaiAPI.use(async (req) => {
-    console.log(`📡 API Request: ${req.endpoint}`, req.data);
-    return true;
-});
-
-// تسجيل في النواة
 if (window.AlaisaiCore) {
-    AlaisaiCore.registerModule('AlaisaiAPI', AlaisaiAPI);
+    AlaisaiCore.registerModule('AlaisaiQuantumAPI', AlaisaiQuantumAPI);
 }
 
-window.AlaisaiAPI = AlaisaiAPI;
-console.log('🔌 Alaisai API جاهزة للعمل (مع أمان متكامل)');
+window.AlaisaiQuantumAPI = AlaisaiQuantumAPI.init();
+window._startTime = Date.now();
+console.log('🔌 Quantum API ready');

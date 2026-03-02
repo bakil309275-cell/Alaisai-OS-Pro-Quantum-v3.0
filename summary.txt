@@ -1,0 +1,14 @@
+===================================
+ALASAI OS PRO - PROJECT SUMMARY
+===================================
+تاريخ الإنشاء: $(date)
+المسار: $(pwd)
+عدد الملفات: 370
+عدد المجلدات: 197
+الحجم: 6.5M
+
+الملفات الأساسية:
+-rw-rw----. 1 root everybody   484 Mar  2 22:36 README.md
+-rw-rw----. 1 root everybody 12356 Mar  2 07:57 index.html
+-rw-rw----. 1 root everybody  2033 Mar  2 08:49 manifest.json
+-rw-rw----. 1 root everybody  4142 Mar  2 08:50 sw.js
