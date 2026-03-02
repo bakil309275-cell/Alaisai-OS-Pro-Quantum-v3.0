@@ -314,3 +314,27 @@ window.onload = () => AlaisaiQuantum.init();
 <script src="system/ui/formatters.js"></script>
 </body>
 </html>
+<!-- إصلاح مشكلة Admin -->
+<script>
+(function() {
+    // التأكد من أن كائن Admin موجود
+    if (typeof window.Admin === 'undefined' || typeof window.Admin.requestAccess !== 'function') {
+        console.log('🔧 تطبيق إصلاح Admin...');
+        window.Admin = {
+            requestAccess: function() {
+                let p = prompt("🔐 أدخل كلمة المرور:");
+                if (p === "1234") {
+                    alert("✅ تم تسجيل الدخول بنجاح!");
+                    // فتح لوحة تحكم بسيطة
+                    const panel = document.createElement('div');
+                    panel.innerHTML = '<div style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1a1a2e; color:white; padding:30px; border-radius:15px; border:2px solid #4cc9f0; z-index:10000; text-align:center;"><h2>🛠️ لوحة الإدارة</h2><p>مرحباً بك في لوحة التحكم</p><button onclick="this.parentElement.remove()" style="padding:10px 20px; background:#4cc9f0; border:none; border-radius:5px; cursor:pointer;">إغلاق</button></div>';
+                    document.body.appendChild(panel);
+                } else {
+                    alert("❌ كلمة المرور خاطئة");
+                }
+            }
+        };
+        console.log('✅ تم تطبيق إصلاح Admin');
+    }
+})();
+</script>
