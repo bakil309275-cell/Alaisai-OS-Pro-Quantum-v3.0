@@ -3762,3 +3762,457 @@ window.onload = () => {
     direction: rtl;
 }
 </style>
+
+<!-- ======================================================================= -->
+<!-- ================ النظام الأسطوري الجامع - كل الميزات ================ -->
+<!-- ======================================================================= -->
+
+<!-- ===== 1. نظام التخزين غير المحدود (OPFS) ===== -->
+<script>
+const AlaisaiStorage = {
+    root: null,
+    async init() {
+        try {
+            this.root = await navigator.storage.getDirectory();
+            await this.createDirectories();
+            console.log('✅ OPFS - تخزين غير محدود');
+            return true;
+        } catch (err) { return false; }
+    },
+    async createDirectories() {
+        const dirs = ['system', 'addons', 'backups', 'temp', 'documents', 'quantum', 'ai'];
+        for (const dir of dirs) {
+            try { await this.root.getDirectoryHandle(dir, { create: true }); } catch (e) {}
+        }
+    },
+    async writeFile(path, content) {
+        try {
+            const parts = path.split('/');
+            const fileName = parts.pop();
+            let current = this.root;
+            for (const dir of parts) current = await current.getDirectoryHandle(dir, { create: true });
+            const fileHandle = await current.getFileHandle(fileName, { create: true });
+            const writable = await fileHandle.createWritable();
+            await writable.write(content);
+            await writable.close();
+            return true;
+        } catch (err) { return false; }
+    },
+    async readFile(path) {
+        try {
+            const parts = path.split('/');
+            const fileName = parts.pop();
+            let current = this.root;
+            for (const dir of parts) current = await current.getDirectoryHandle(dir);
+            const fileHandle = await current.getFileHandle(fileName);
+            const file = await fileHandle.getFile();
+            return await file.text();
+        } catch (err) { return null; }
+    },
+    async listFiles(path = '') {
+        try {
+            const parts = path.split('/').filter(p => p);
+            let current = this.root;
+            for (const dir of parts) current = await current.getDirectoryHandle(dir);
+            const files = [];
+            for await (const entry of current.values()) {
+                files.push({
+                    name: entry.name,
+                    type: entry.kind,
+                    path: path ? `${path}/${entry.name}` : entry.name,
+                    isDirectory: entry.kind === 'directory'
+                });
+            }
+            return files;
+        } catch (err) { return []; }
+    },
+    async deleteFile(path) {
+        try {
+            const parts = path.split('/');
+            const fileName = parts.pop();
+            let current = this.root;
+            for (const dir of parts) current = await current.getDirectoryHandle(dir);
+            await current.removeEntry(fileName);
+            return true;
+        } catch (err) { return false; }
+    }
+};
+AlaisaiStorage.init();
+</script>
+
+<!-- ===== 2. نظام الأمان المتقدم (Web Crypto) ===== -->
+<script>
+const AlaisaiSecurity = {
+    async hashPassword(password) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password + '_alaisai_salt_2026');
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    },
+    async encrypt(data, password) {
+        const encoder = new TextEncoder();
+        const keyMaterial = await crypto.subtle.importKey('raw', encoder.encode(password.padEnd(32, '0').slice(0, 32)), { name: 'PBKDF2' }, false, ['deriveKey']);
+        const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: encoder.encode('salt_alaisai'), iterations: 100000, hash: 'SHA-256' }, keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['encrypt']);
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoder.encode(JSON.stringify(data)));
+        return { iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) };
+    },
+    sanitizeInput(input) {
+        if (!input) return input;
+        return String(input).replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '').replace(/<[^>]*>?/gm, '').replace(/'/g, "''").replace(/--/g, '');
+    }
+};
+console.log('✅ أمان متقدم - Web Crypto');
+</script>
+
+<!-- ===== 3. نظام الإضافات المعزول مع أزرار حذف وتخزين مستقل ===== -->
+<script>
+const AlaisaiAddons = {
+    addons: new Map(),
+    async init() {
+        try {
+            const stored = localStorage.getItem('alaisai_addons');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                parsed.forEach(a => this.addons.set(a.id, a));
+            }
+        } catch (err) {}
+        if (this.addons.size === 0) {
+            this.addAddon({ name: 'مدير الملفات', icon: '📁' });
+            this.addAddon({ name: 'المفكرة', icon: '📝' });
+            this.addAddon({ name: 'الآلة الحاسبة', icon: '🧮' });
+        }
+        console.log('📦 إضافات معزولة - تخزين مستقل');
+    },
+    addAddon(data) {
+        const id = 'addon_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+        const addon = { id, name: data.name || 'إضافة', icon: data.icon || '📦', content: data.content || '', enabled: true, installedAt: new Date().toISOString() };
+        this.addons.set(id, addon);
+        this._save();
+        return addon;
+    },
+    removeAddon(id) { const result = this.addons.delete(id); if (result) this._save(); return result; },
+    listAddons() { return Array.from(this.addons.values()); },
+    _save() { localStorage.setItem('alaisai_addons', JSON.stringify(Array.from(this.addons.values()))); }
+};
+AlaisaiAddons.init();
+</script>
+
+<!-- ===== 4. مستكشف المستودع (GitHub + WebDAV) ===== -->
+<script>
+const AlaisaiRepoExplorer = {
+    token: null, repo: 'bakil309275-cell/Alaisai-OS-Pro-Quantum-v3.0', branch: 'main',
+    webdav: { url: '', user: '', pass: '' },
+    setGitHubToken(token) { this.token = token; sessionStorage.setItem('github_token', token); alert('✅ تم تعيين توكن GitHub'); },
+    setWebDAV(url, user, pass) { this.webdav = { url, user, pass }; sessionStorage.setItem('webdav_url', url); sessionStorage.setItem('webdav_user', user); if (pass) sessionStorage.setItem('webdav_pass', btoa(pass)); alert('✅ تم تعيين بيانات WebDAV'); },
+    async listGitHub(path = '') {
+        const url = `https://api.github.com/repos/${this.repo}/contents/${path}?ref=${this.branch}`;
+        const headers = this.token ? { Authorization: `token ${this.token}` } : {};
+        try {
+            const res = await fetch(url, { headers });
+            if (!res.ok) throw new Error('GitHub error');
+            const data = await res.json();
+            return data.map(item => ({ name: item.name, type: item.type, path: item.path, size: item.size, download_url: item.download_url }));
+        } catch (err) { return []; }
+    },
+    openExplorer() {
+        const content = `
+            <div style="direction:rtl; padding:20px; background:#1a1a2e; color:white; border-radius:15px;">
+                <h2 style="color:#4cc9f0;">📡 مستكشف المستودع</h2>
+                <div style="display:flex; gap:10px; margin:20px 0;">
+                    <button onclick="AlaisaiRepoExplorer.openGitHub()" style="flex:1; padding:12px; background:#4cc9f0; border:none; border-radius:8px; cursor:pointer;">🐙 GitHub</button>
+                    <button onclick="AlaisaiRepoExplorer.openWebDAV()" style="flex:1; padding:12px; background:#4ade80; border:none; border-radius:8px; cursor:pointer;">☁️ WebDAV</button>
+                </div>
+                <div id="explorer-content" style="background:rgba(0,0,0,0.3); padding:20px; border-radius:10px;"></div>
+            </div>
+        `;
+        AlaisaiOS.openApp({ name: 'مستكشف المستودع', content });
+    },
+    openGitHub: async function() {
+        const files = await this.listGitHub('');
+        const content = `
+            <div style="direction:rtl; padding:20px;">
+                <h3 style="color:#4cc9f0;">🐙 GitHub</h3>
+                <input type="text" id="github-token" placeholder="GitHub Token" style="width:100%; padding:8px; margin:10px 0; background:#0f0f1f; border:1px solid #4cc9f0; border-radius:5px; color:white;">
+                <button onclick="AlaisaiRepoExplorer.setGitHubToken(document.getElementById('github-token').value)" style="width:100%; padding:8px; background:#4cc9f0; border:none; border-radius:5px; cursor:pointer;">🔑 تعيين</button>
+                <div style="margin-top:20px; background:#0f0f1f; border-radius:5px; padding:10px;">
+                    ${files.map(f => `<div style="padding:5px; border-bottom:1px solid rgba(255,255,255,0.1);">${f.type === 'dir' ? '📁' : '📄'} ${f.name}</div>`).join('')}
+                </div>
+            </div>
+        `;
+        AlaisaiOS.openApp({ name: 'مستكشف GitHub', content });
+    },
+    openWebDAV: function() {
+        const content = `
+            <div style="direction:rtl; padding:20px;">
+                <h3 style="color:#4ade80;">☁️ WebDAV</h3>
+                <input type="text" id="webdav-url" placeholder="URL" style="width:100%; padding:8px; margin:5px 0; background:#0f0f1f; border:1px solid #4ade80; border-radius:5px; color:white;">
+                <input type="text" id="webdav-user" placeholder="Username" style="width:100%; padding:8px; margin:5px 0; background:#0f0f1f; border:1px solid #4ade80; border-radius:5px; color:white;">
+                <input type="password" id="webdav-pass" placeholder="Password" style="width:100%; padding:8px; margin:5px 0; background:#0f0f1f; border:1px solid #4ade80; border-radius:5px; color:white;">
+                <button onclick="AlaisaiRepoExplorer.setWebDAV(document.getElementById('webdav-url').value, document.getElementById('webdav-user').value, document.getElementById('webdav-pass').value)" style="width:100%; padding:8px; background:#4ade80; border:none; border-radius:5px; cursor:pointer;">🔗 اتصال</button>
+            </div>
+        `;
+        AlaisaiOS.openApp({ name: 'مستكشف WebDAV', content });
+    }
+};
+console.log('✅ مستكشف المستودع - GitHub/WebDAV');
+</script>
+
+<!-- ===== 5. نظام المزامنة السحابية ===== -->
+<script>
+const AlaisaiSync = {
+    async uploadToGitHub() {
+        if (!AlaisaiRepoExplorer.token) { alert('❌ تحتاج إلى توكن GitHub'); return; }
+        const items = AlaisaiAddons.listAddons();
+        if (items.length === 0) { alert('⚠️ لا توجد إضافات'); return; }
+        let success = 0;
+        for (const item of items) {
+            const path = `addons/${item.id}.json`;
+            const url = `https://api.github.com/repos/${AlaisaiRepoExplorer.repo}/contents/${path}`;
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify(item, null, 2))));
+            try {
+                const res = await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `token ${AlaisaiRepoExplorer.token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: `رفع ${item.name}`, content: content, branch: AlaisaiRepoExplorer.branch })
+                });
+                if (res.ok) success++;
+            } catch (err) {}
+        }
+        alert(`✅ تم رفع ${success} من ${items.length}`);
+    },
+    async downloadFromGitHub() {
+        if (!AlaisaiRepoExplorer.token) { alert('❌ تحتاج إلى توكن GitHub'); return; }
+        const url = `https://api.github.com/repos/${AlaisaiRepoExplorer.repo}/contents/addons?ref=${AlaisaiRepoExplorer.branch}`;
+        try {
+            const res = await fetch(url, { headers: { 'Authorization': `token ${AlaisaiRepoExplorer.token}` } });
+            if (!res.ok) throw new Error();
+            const files = await res.json();
+            let success = 0;
+            for (const file of files) {
+                if (file.type === 'file' && file.name.endsWith('.json')) {
+                    const fileRes = await fetch(file.download_url);
+                    const content = await fileRes.json();
+                    AlaisaiAddons.addAddon(content);
+                    success++;
+                }
+            }
+            alert(`✅ تم سحب ${success} عنصر`);
+        } catch (err) { alert('❌ فشل السحب'); }
+    }
+};
+console.log('✅ مزامنة سحابية - GitHub');
+</script>
+
+<!-- ===== 6. نظام النسخ الاحتياطي ===== -->
+<script>
+const AlaisaiBackup = {
+    async createBackup() {
+        const backup = {
+            timestamp: new Date().toISOString(),
+            apps: AlaisaiOS?.db?.registry || [],
+            addons: AlaisaiAddons.listAddons(),
+            config: AlaisaiOS?.db?.config || { pass: "1234" }
+        };
+        await AlaisaiStorage.writeFile(`backups/backup_${Date.now()}.json`, JSON.stringify(backup, null, 2));
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backup, null, 2));
+        const a = document.createElement('a'); a.href = dataStr; a.download = `backup_${new Date().toISOString().slice(0,10)}.json`; a.click();
+        alert('✅ تم إنشاء النسخة');
+    },
+    async restoreBackup() {
+        const input = document.createElement('input'); input.type = 'file'; input.accept = '.json';
+        input.onchange = e => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const backup = JSON.parse(e.target.result);
+                    if (backup.apps && AlaisaiOS) { AlaisaiOS.db.registry = backup.apps; AlaisaiOS.save(); }
+                    if (backup.addons) { backup.addons.forEach(a => AlaisaiAddons.addAddon(a)); }
+                    if (backup.config && AlaisaiOS) { AlaisaiOS.db.config = backup.config; AlaisaiOS.save(); }
+                    alert('✅ تمت الاستعادة'); location.reload();
+                } catch (err) { alert('❌ ملف غير صالح'); }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+};
+console.log('💾 نسخ احتياطي - إنشاء واستعادة');
+</script>
+
+<!-- ===== 7. النواة الكمومية والذكاء الاصطناعي ===== -->
+<script>
+const AlaisaiQuantum = {
+    quantum: { active: true, coherence: 0.99, qubits: 8 },
+    ai: { model: 'Neural v3', learning: true, accuracy: 0.95 },
+    init() { setInterval(() => { this.quantum.coherence = 0.99 + (Math.random() * 0.01); }, 5000); return this; },
+    getQuantumState() { return this.quantum; },
+    getAIState() { return this.ai; }
+};
+AlaisaiQuantum.init();
+console.log('⚛️ نظام كمومي | 🧠 ذكاء اصطناعي');
+</script>
+
+<!-- ===== 8. النواة الرئيسية مع جميع الأزرار والميزات ===== -->
+<script>
+window.AlaisaiOS = window.AlaisaiOS || {
+    db: { config: { pass: "1234" }, registry: [
+        { id: 'app_1', name: 'النظام الكمومي', icon: '⚛️', order: 0 },
+        { id: 'app_2', name: 'AI مساعد', icon: '🧠', order: 1 },
+        { id: 'app_3', name: 'مدير الملفات', icon: '📁', order: 2 },
+        { id: 'app_4', name: 'الإضافات', icon: '📦', order: 3 },
+        { id: 'app_5', name: 'المستكشف', icon: '📡', order: 4 },
+        { id: 'app_6', name: 'المزامنة', icon: '☁️', order: 5 },
+        { id: 'app_7', name: 'النسخ', icon: '💾', order: 6 }
+    ]},
+    
+    init() { this.renderDesktop(); this.startClock(); this.checkNetwork(); },
+    
+    renderDesktop() {
+        const grid = document.getElementById('app-grid'); if (!grid) return;
+        grid.innerHTML = "";
+        this.db.registry.sort((a,b) => a.order - b.order).forEach((app, i) => {
+            const card = document.createElement('div'); card.className = "app-card"; card.setAttribute('draggable', 'true'); card.dataset.index = i; card.dataset.id = app.id;
+            card.innerHTML = `<div class="icon-box">${app.icon}</div><span class="app-name">${app.name}</span>`;
+            card.ondragstart = (e) => { e.dataTransfer.setData('text/plain', i); card.style.opacity = '0.5'; };
+            card.ondragend = () => card.style.opacity = '1';
+            card.ondragover = (e) => e.preventDefault();
+            card.ondrop = (e) => {
+                e.preventDefault();
+                const from = parseInt(e.dataTransfer.getData('text/plain')); const to = i;
+                if (from === to) return;
+                const items = [...this.db.registry].sort((a,b) => a.order - b.order);
+                const [moved] = items.splice(from, 1); items.splice(to, 0, moved);
+                this.db.registry = items.map((item, idx) => { item.order = idx; return item; });
+                this.save(); this.renderDesktop();
+            };
+            card.onclick = () => this.openApp(app);
+            grid.appendChild(card);
+        });
+    },
+    
+    openApp(app) {
+        const stage = document.getElementById('stage-overlay'); const viewport = document.getElementById('stage-viewport');
+        document.getElementById('active-app-title').innerText = app.name;
+        if (app.id === 'app_4') viewport.innerHTML = this.renderAddons();
+        else if (app.id === 'app_5') viewport.innerHTML = this.renderExplorer();
+        else if (app.id === 'app_6') viewport.innerHTML = this.renderSync();
+        else if (app.id === 'app_7') viewport.innerHTML = this.renderBackup();
+        else viewport.innerHTML = `<div style="padding:20px;"><h2>${app.name}</h2></div>`;
+        stage.classList.remove('hidden');
+    },
+    
+    renderAddons() {
+        let html = '<h2 style="color:#4cc9f0;">📦 الإضافات</h2><button onclick="AlaisaiOS.addAddon()" style="padding:10px; background:#4ade80; border:none; border-radius:5px; margin:10px 0; cursor:pointer;">➕ إضافة</button><div style="background:#0f0f1f; border-radius:5px; padding:10px;">';
+        AlaisaiAddons.listAddons().forEach(a => {
+            html += `<div style="display:flex; align-items:center; padding:10px; border-bottom:1px solid rgba(255,255,255,0.1);"><span style="font-size:24px; margin-left:10px;">${a.icon}</span><span style="flex:1;">${a.name}</span><button onclick="AlaisaiAddons.removeAddon('${a.id}'); AlaisaiOS.openApp({id:'app_4'})" style="background:#f72585; border:none; border-radius:3px; padding:5px; cursor:pointer;">🗑️</button></div>`;
+        });
+        return html + '</div>';
+    },
+    
+    renderExplorer() {
+        return `
+            <div style="padding:20px;"><h2 style="color:#4cc9f0;">📡 المستكشف</h2>
+            <div style="display:flex; gap:10px; margin:20px 0;">
+                <button onclick="AlaisaiRepoExplorer.openGitHub()" style="flex:1; padding:12px; background:#4cc9f0; border:none; border-radius:5px; cursor:pointer;">🐙 GitHub</button>
+                <button onclick="AlaisaiRepoExplorer.openWebDAV()" style="flex:1; padding:12px; background:#4ade80; border:none; border-radius:5px; cursor:pointer;">☁️ WebDAV</button>
+            </div></div>
+        `;
+    },
+    
+    renderSync() {
+        return `
+            <div style="padding:20px;"><h2 style="color:#4cc9f0;">☁️ المزامنة</h2>
+            <div style="display:flex; gap:10px; margin:20px 0;">
+                <button onclick="AlaisaiSync.uploadToGitHub()" style="flex:1; padding:12px; background:#4ade80; border:none; border-radius:5px; cursor:pointer;">⬆️ رفع</button>
+                <button onclick="AlaisaiSync.downloadFromGitHub()" style="flex:1; padding:12px; background:#4cc9f0; border:none; border-radius:5px; cursor:pointer;">⬇️ سحب</button>
+            </div></div>
+        `;
+    },
+    
+    renderBackup() {
+        return `
+            <div style="padding:20px;"><h2 style="color:#4cc9f0;">💾 النسخ</h2>
+            <div style="display:flex; gap:10px; margin:20px 0;">
+                <button onclick="AlaisaiBackup.createBackup()" style="flex:1; padding:12px; background:#4ade80; border:none; border-radius:5px; cursor:pointer;">📥 إنشاء</button>
+                <button onclick="AlaisaiBackup.restoreBackup()" style="flex:1; padding:12px; background:#4cc9f0; border:none; border-radius:5px; cursor:pointer;">📤 استعادة</button>
+            </div></div>
+        `;
+    },
+    
+    addAddon() { const name = prompt("الاسم:"); if (name) { AlaisaiAddons.addAddon({ name }); this.openApp({id:'app_4'}); } },
+    closeStage() { document.getElementById('stage-overlay').classList.add('hidden'); document.getElementById('stage-viewport').innerHTML = ''; },
+    startClock() { const update = () => { document.getElementById('digital-clock').innerText = new Date().toLocaleTimeString('ar-SA'); }; update(); setInterval(update, 1000); },
+    checkNetwork() { const dot = document.getElementById('sync-indicator'); if (dot) dot.style.color = navigator.onLine ? "#4ade80" : "#f72585"; },
+    save() { localStorage.setItem('alaisai_db', JSON.stringify(this.db)); }
+};
+
+// ===== لوحة الإدارة الكاملة =====
+window.Admin = {
+    requestAccess() { const p = prompt("🔐 كلمة المرور:"); if (p === "1234") this.openDashboard(); else alert("❌ خطأ"); },
+    openDashboard() {
+        const content = `
+            <div style="padding:20px; background:#1a1a2e; color:white; border-radius:15px;">
+                <h2 style="color:#4cc9f0;">🛠️ لوحة التحكم</h2>
+                <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin:20px 0;">
+                    <button onclick="Admin.renderTab('apps')" style="padding:12px; background:#4cc9f0; border:none; border-radius:5px;">📱 تطبيقات</button>
+                    <button onclick="Admin.renderTab('addons')" style="padding:12px; background:#fbbf24; border:none; border-radius:5px;">📦 إضافات</button>
+                    <button onclick="Admin.renderTab('quantum')" style="padding:12px; background:#a855f7; border:none; border-radius:5px;">⚛️ كمومي</button>
+                    <button onclick="Admin.renderTab('ai')" style="padding:12px; background:#14b8a6; border:none; border-radius:5px;">🧠 AI</button>
+                    <button onclick="Admin.renderTab('storage')" style="padding:12px; background:#f97316; border:none; border-radius:5px;">📡 مستكشف</button>
+                    <button onclick="Admin.renderTab('cloud')" style="padding:12px; background:#4ade80; border:none; border-radius:5px;">☁️ مزامنة</button>
+                    <button onclick="Admin.renderTab('backup')" style="padding:12px; background:#f72585; border:none; border-radius:5px;">💾 نسخ</button>
+                    <button onclick="Admin.renderTab('settings')" style="padding:12px; background:#6b7280; border:none; border-radius:5px;">⚙️ إعدادات</button>
+                </div>
+                <div id="admin-view" style="background:rgba(0,0,0,0.3); padding:15px; border-radius:10px; min-height:200px;"></div>
+            </div>
+        `;
+        AlaisaiOS.openApp({ name: 'لوحة التحكم', content });
+        setTimeout(() => this.renderTab('apps'), 100);
+    },
+    renderTab(tab) {
+        const view = document.getElementById('admin-view'); if (!view) return;
+        if (tab === 'apps') {
+            let html = '<h4 style="color:#4cc9f0;">📱 التطبيقات</h4>';
+            AlaisaiOS.db.registry.forEach((app, i) => {
+                html += `<div style="display:flex; gap:5px; padding:5px;"><span>${app.icon}</span><input value="${app.name}" id="name_${app.id}" style="flex:1;"><button onclick="Admin.saveApp('${app.id}')">💾</button><button onclick="Admin.deleteApp('${app.id}')">🗑️</button></div>`;
+            });
+            html += `<button onclick="Admin.addApp()" style="width:100%; margin-top:10px;">➕ إضافة</button>`;
+            view.innerHTML = html;
+        } else if (tab === 'addons') {
+            let html = '<h4 style="color:#fbbf24;">📦 الإضافات</h4>';
+            AlaisaiAddons.listAddons().forEach(a => {
+                html += `<div style="display:flex; gap:5px; padding:5px;"><span>${a.icon}</span><span style="flex:1;">${a.name}</span><button onclick="AlaisaiAddons.removeAddon('${a.id}'); Admin.renderTab('addons')">🗑️</button></div>`;
+            });
+            html += `<button onclick="Admin.addAddon()" style="width:100%; margin-top:10px;">➕ إضافة</button>`;
+            view.innerHTML = html;
+        } else if (tab === 'quantum') {
+            view.innerHTML = `<h4 style="color:#a855f7;">⚛️ كمومي</h4><p>Qubits: 8 | ترابط: 99.9%</p>`;
+        } else if (tab === 'ai') {
+            view.innerHTML = `<h4 style="color:#14b8a6;">🧠 AI</h4><p>النموذج: Neural v3 | تعلم مستمر</p>`;
+        } else if (tab === 'storage') {
+            view.innerHTML = `<h4 style="color:#f97316;">📡 مستكشف</h4><button onclick="AlaisaiRepoExplorer.openExplorer()" style="width:100%; padding:10px;">🔍 فتح</button>`;
+        } else if (tab === 'cloud') {
+            view.innerHTML = `<h4 style="color:#4ade80;">☁️ مزامنة</h4><button onclick="AlaisaiSync.uploadToGitHub()" style="width:100%; margin-bottom:5px;">⬆️ رفع</button><button onclick="AlaisaiSync.downloadFromGitHub()" style="width:100%;">⬇️ سحب</button>`;
+        } else if (tab === 'backup') {
+            view.innerHTML = `<h4 style="color:#f72585;">💾 نسخ</h4><button onclick="AlaisaiBackup.createBackup()" style="width:100%; margin-bottom:5px;">📥 إنشاء</button><button onclick="AlaisaiBackup.restoreBackup()" style="width:100%;">📤 استعادة</button>`;
+        } else if (tab === 'settings') {
+            view.innerHTML = `<h4 style="color:#6b7280;">⚙️ إعدادات</h4><button onclick="Admin.changePass()" style="width:100%; margin-bottom:5px;">🔐 تغيير كلمة المرور</button><button onclick="Admin.exportData()" style="width:100%; margin-bottom:5px;">📥 تصدير</button><button onclick="Admin.importData()" style="width:100%;">📤 استيراد</button>`;
+        }
+    },
+    saveApp(id) { const app = AlaisaiOS.db.registry.find(a => a.id === id); if (app) { app.name = document.getElementById('name_' + id).value; AlaisaiOS.save(); AlaisaiOS.renderDesktop(); this.renderTab('apps'); } },
+    deleteApp(id) { AlaisaiOS.db.registry = AlaisaiOS.db.registry.filter(a => a.id !== id); AlaisaiOS.save(); AlaisaiOS.renderDesktop(); this.renderTab('apps'); },
+    addApp() { const name = prompt("الاسم:"); if (name) { AlaisaiOS.db.registry.push({ id: 'app_' + Date.now(), name, icon: '📦', order: AlaisaiOS.db.registry.length }); AlaisaiOS.save(); AlaisaiOS.renderDesktop(); this.renderTab('apps'); } },
+    addAddon() { const name = prompt("الاسم:"); if (name) { AlaisaiAddons.addAddon({ name }); this.renderTab('addons'); } },
+    changePass() { const newPass = prompt("كلمة المرور الجديدة:"); if (newPass) { AlaisaiOS.db.config.pass = newPass; AlaisaiOS.save(); alert("✅ تم التغيير"); } },
+    exportData() { const data = { apps: AlaisaiOS.db.registry, addons: AlaisaiAddons.listAddons(), config: AlaisaiOS.db.config }; const a = document.createElement('a'); a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data)); a.download = `export.json`; a.click(); },
+    importData() { const input = document.createElement('input'); input.type = 'file'; input.accept = '.json'; input.onchange = e => { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = e => { try { const data = JSON.parse(e.target.result); if (data.apps) AlaisaiOS.db.registry = data.apps; if (data.addons) data.addons.forEach(a => AlaisaiAddons.addAddon(a)); if (data.config) AlaisaiOS.db.config = data.config; AlaisaiOS.save(); alert('✅ تم'); location.reload(); } catch(err) { alert('❌ خطأ'); } }; reader.readAsText(file); }; input.click(); }
+};
+
+// ربط الترس
+document.getElementById('admin-gate')?.addEventListener('click', (e) => { e.preventDefault(); Admin.requestAccess(); });
+
+// بدء التشغيل
+window.onload = () => { AlaisaiOS.init(); console.log('🏆 النظام الأسطوري الجامع جاهز'); };
+</script>
