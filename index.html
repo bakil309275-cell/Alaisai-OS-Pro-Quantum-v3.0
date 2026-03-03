@@ -338,3 +338,254 @@ window.onload = () => AlaisaiQuantum.init();
     }
 })();
 </script>
+
+<script>
+// ==================== إصلاح شامل لمشاكل النظام ====================
+(function() {
+    console.log('🔧 بدء تطبيق الإصلاحات الشاملة...');
+    
+    // 1. إصلاح مشكلة Admin
+    if (typeof window.Admin === 'undefined' || typeof window.Admin.requestAccess !== 'function') {
+        window.Admin = {
+            requestAccess: function() {
+                let p = prompt("🔐 أدخل كلمة المرور:");
+                if (p === "1234") {
+                    // إنشاء لوحة تحكم متكاملة
+                    const panel = document.createElement('div');
+                    panel.id = 'admin-panel';
+                    panel.innerHTML = `
+                        <div style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(10px); z-index:10000; display:flex; align-items:center; justify-content:center;">
+                            <div style="background:#1a1a2e; color:white; padding:30px; border-radius:15px; border:2px solid #4cc9f0; max-width:500px; width:90%; max-height:80vh; overflow-y:auto;">
+                                <h2 style="color:#4cc9f0; margin-bottom:20px;">🛠️ لوحة الإدارة المركزية</h2>
+                                <p style="margin-bottom:20px;">✅ تم تسجيل الدخول بنجاح!</p>
+                                <div style="display:grid; gap:10px;">
+                                    <button onclick="location.reload()" style="padding:10px; background:#4cc9f0; border:none; border-radius:5px; color:black; font-weight:bold; cursor:pointer;">🔄 إعادة تحميل الصفحة</button>
+                                    <button onclick="document.getElementById('admin-panel').remove()" style="padding:10px; background:#f72585; border:none; border-radius:5px; color:white; font-weight:bold; cursor:pointer;">❌ إغلاق</button>
+                                </div>
+                                <div style="margin-top:20px; padding:10px; background:rgba(255,255,255,0.1); border-radius:5px;">
+                                    <p style="color:#4cc9f0;">📊 معلومات النظام:</p>
+                                    <p>🕒 الوقت: ${new Date().toLocaleString('ar-SA')}</p>
+                                    <p>📱 المتصفح: ${navigator.userAgent.substring(0, 50)}...</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(panel);
+                } else {
+                    alert("❌ كلمة المرور خاطئة");
+                }
+            }
+        };
+        console.log('✅ إصلاح Admin: تم التطبيق');
+    }
+
+    // 2. إصلاح مشكلة السحب والترتيب
+    function fixDragAndDrop() {
+        const grid = document.getElementById('app-grid');
+        if (!grid) return;
+
+        // إعادة تعيين أحداث السحب
+        const cards = grid.querySelectorAll('.app-card');
+        cards.forEach((card, index) => {
+            card.setAttribute('draggable', 'true');
+            card.dataset.index = index;
+            
+            card.ondragstart = (e) => {
+                e.dataTransfer.setData('text/plain', card.dataset.index);
+                card.classList.add('dragging');
+                card.style.opacity = '0.5';
+                card.style.transform = 'scale(0.95) rotate(2deg)';
+            };
+            
+            card.ondragend = (e) => {
+                card.classList.remove('dragging');
+                card.style.opacity = '1';
+                card.style.transform = 'scale(1) rotate(0deg)';
+            };
+            
+            card.ondragover = (e) => {
+                e.preventDefault();
+                card.classList.add('drag-over');
+            };
+            
+            card.ondragleave = () => {
+                card.classList.remove('drag-over');
+            };
+            
+            card.ondrop = (e) => {
+                e.preventDefault();
+                card.classList.remove('drag-over');
+                
+                const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                const toIndex = parseInt(card.dataset.index);
+                
+                if (fromIndex === toIndex) return;
+                
+                // الحصول على جميع البطاقات
+                const allCards = Array.from(grid.children);
+                
+                // تبديل المواقع
+                const fromCard = allCards[fromIndex];
+                const toCard = allCards[toIndex];
+                
+                if (fromIndex < toIndex) {
+                    grid.insertBefore(fromCard, toCard.nextSibling);
+                } else {
+                    grid.insertBefore(fromCard, toCard);
+                }
+                
+                // تحديث الـ dataset indices
+                Array.from(grid.children).forEach((c, i) => {
+                    c.dataset.index = i;
+                });
+                
+                // حفظ الترتيب الجديد
+                saveNewOrder();
+                
+                // تأثير بصري للنجاح
+                card.style.transform = 'scale(1.05)';
+                setTimeout(() => {
+                    card.style.transform = 'scale(1)';
+                }, 200);
+            };
+        });
+        
+        console.log('✅ إصلاح السحب والإفلات: تم التطبيق');
+    }
+
+    // 3. حفظ الترتيب الجديد
+    function saveNewOrder() {
+        const grid = document.getElementById('app-grid');
+        if (!grid) return;
+        
+        const order = Array.from(grid.children).map(card => ({
+            name: card.querySelector('.app-name')?.textContent || '',
+            icon: card.querySelector('.icon-box')?.textContent || '📦'
+        }));
+        
+        localStorage.setItem('app_order', JSON.stringify(order));
+        
+        // إظهار إشعار نجاح
+        const notif = document.createElement('div');
+        notif.textContent = '✅ تم حفظ الترتيب';
+        notif.style.cssText = 'position:fixed; top:20px; right:20px; background:#4ade80; color:black; padding:10px 20px; border-radius:5px; z-index:9999; animation: fadeInOut 2s;';
+        document.body.appendChild(notif);
+        setTimeout(() => notif.remove(), 2000);
+        
+        console.log('💾 تم حفظ الترتيب الجديد');
+    }
+
+    // 4. تحميل الترتيب المحفوظ
+    function loadSavedOrder() {
+        const saved = localStorage.getItem('app_order');
+        if (!saved) return;
+        
+        try {
+            const order = JSON.parse(saved);
+            const grid = document.getElementById('app-grid');
+            if (!grid) return;
+            
+            const cards = Array.from(grid.children);
+            
+            // إعادة ترتيب البطاقات حسب الترتيب المحفوظ
+            order.forEach((item, targetIndex) => {
+                const sourceIndex = cards.findIndex(card => 
+                    card.querySelector('.app-name')?.textContent === item.name
+                );
+                
+                if (sourceIndex !== -1 && sourceIndex !== targetIndex) {
+                    const fromCard = cards[sourceIndex];
+                    const toCard = cards[targetIndex];
+                    
+                    if (sourceIndex < targetIndex) {
+                        grid.insertBefore(fromCard, toCard.nextSibling);
+                    } else {
+                        grid.insertBefore(fromCard, toCard);
+                    }
+                }
+            });
+            
+            // تحديث الـ dataset indices
+            Array.from(grid.children).forEach((c, i) => {
+                c.dataset.index = i;
+            });
+            
+            console.log('✅ تم تحميل الترتيب المحفوظ');
+        } catch (err) {
+            console.warn('⚠️ فشل تحميل الترتيب المحفوظ:', err);
+        }
+    }
+
+    // 5. إضافة تأثيرات CSS
+    function addStyles() {
+        const style = document.createElement('style');
+        style.textContent = `
+            .app-card {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                cursor: grab !important;
+                user-select: none;
+                position: relative;
+            }
+            
+            .app-card:active {
+                cursor: grabbing !important;
+            }
+            
+            .app-card.dragging {
+                opacity: 0.8;
+                transform: scale(0.95) rotate(2deg) !important;
+                box-shadow: 0 10px 30px rgba(76, 201, 240, 0.5);
+                z-index: 1000;
+            }
+            
+            .app-card.drag-over {
+                border: 2px dashed #4cc9f0 !important;
+                transform: scale(1.05) !important;
+                background: rgba(76, 201, 240, 0.1);
+            }
+            
+            .app-card::after {
+                content: '⋮⋮';
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                font-size: 12px;
+                color: #4cc9f0;
+                opacity: 0;
+                transition: opacity 0.3s;
+            }
+            
+            .app-card:hover::after {
+                opacity: 1;
+            }
+            
+            @keyframes fadeInOut {
+                0% { opacity: 0; transform: translateY(-20px); }
+                20% { opacity: 1; transform: translateY(0); }
+                80% { opacity: 1; transform: translateY(0); }
+                100% { opacity: 0; transform: translateY(-20px); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // 6. تنفيذ الإصلاحات بعد تحميل الصفحة
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            addStyles();
+            setTimeout(() => {
+                fixDragAndDrop();
+                loadSavedOrder();
+            }, 100);
+        });
+    } else {
+        addStyles();
+        setTimeout(() => {
+            fixDragAndDrop();
+            loadSavedOrder();
+        }, 100);
+    }
+
+    console.log('✅ تم تطبيق جميع الإصلاحات بنجاح');
+})();
+</script>
